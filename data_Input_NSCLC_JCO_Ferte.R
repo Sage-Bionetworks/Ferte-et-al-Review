@@ -62,5 +62,3 @@ LUSC_TCGA_raw_exp <- addFile(entity=LUSC_TCGA_raw_exp,CELpath)
 
 # push the raw data into this entity
 LUSC_TCGA_raw_exp <- storeEntity(entity=LUSC_TCGA_raw_exp)
-
-
