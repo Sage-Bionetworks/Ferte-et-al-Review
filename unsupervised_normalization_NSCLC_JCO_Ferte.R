@@ -82,7 +82,7 @@ assign(tmp,mas5(rawdata))
 tmp <- paste(dataset,"_frma",sep="")
 assign(tmp,frma(rawdata, summarize = "random_effect"))
 tmp1 <- paste(dataset,"_barcode",sep="")
-assign(tmp1,barcode(get(tmp),platform=""))
+assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
 # save the data in Synapse
@@ -90,62 +90,62 @@ assign(tmp1,barcode(get(tmp),platform=""))
 require(synapseClient)
 synapseLogin(username="charles.ferte@sagebase.org",password="charles")
 #
-dir_rma <- Data(list(name = "dir rma", parentId = 'syn87682'))
-dir_rma <- createEntity(dir_rma)
+HGU133a_rma <- Data(list(name = "HGU133a rma", parentId = 'syn87682'))
+HGU133a_rma <- createEntity(HGU133a_rma)
 
 # add object into the data entity
-dir_rma <- addObject(dir_rma,Dir_rma)
+HGU133a_rma <- addObject(HGU133a_rma,HGU133A_rma)
 
 # push the raw data into this entity
-dir_rma <- storeEntity(entity=dir_rma)
+HGU133a_rma <- storeEntity(entity=HGU133a_rma)
 
 #############################################################################################
-dir_gcrma <- Data(list(name = "dir gcrma", parentId = 'syn87682'))
-dir_gcrma <- createEntity(dir_gcrma)
+HGU133a_gcrma <- Data(list(name = "HGU133a gcrma", parentId = 'syn87682'))
+HGU133a_gcrma <- createEntity(HGU133a_gcrma)
 
 # add object into the data entity
-dir_gcrma <- addObject(dir_gcrma,Dir_gcrma)
+HGU133a_gcrma <- addObject(HGU133a_gcrma,HGU133A_gcrma)
 
 # push the raw data into this entity
-dir_gcrma <- storeEntity(entity=dir_gcrma)
+HGU133a_gcrma <- storeEntity(entity=HGU133a_gcrma)
 #############################################################################################
 
 
-dir_MAS5 <- Data(list(name = "dir MAS5", parentId = 'syn87682'))
-dir_MAS5 <- createEntity(dir_MAS5)
+HGU133a_MAS5 <- Data(list(name = "HGU133a MAS5", parentId = 'syn87682'))
+HGU133a_MAS5 <- createEntity(HGU133a_MAS5)
 
 # add object into the data entity
-dir_MAS5 <- addObject(dir_MAS5,Dir_MAS5)
+HGU133a_MAS5 <- addObject(HGU133a_MAS5,HGU133A_MAS5)
 
 # push the raw data into this entity
-dir_MAS5 <- storeEntity(entity=dir_MAS5)
+HGU133a_MAS5 <- storeEntity(entity=HGU133a_MAS5)
 #############################################################################################
-dir_dCHIP <- Data(list(name = "dir dCHIP", parentId = 'syn87682'))
-dir_dCHIP <- createEntity(dir_dCHIP)
+HGU133a_dCHIP <- Data(list(name = "HGU133a dCHIP", parentId = 'syn87682'))
+HGU133a_dCHIP <- createEntity(HGU133a_dCHIP)
 
 # add object into the data entity
-dir_dCHIP <- addObject(dir_dCHIP,Dir_dCHIP)
+HGU133a_dCHIP <- addObject(HGU133a_dCHIP,HGU133A_dCHIP)
 
 # push the raw data into this entity
-dir_dCHIP <- storeEntity(entity=dir_dCHIP)
-#############################################################################################
-
-lusc_frma <- Data(list(name = "lusc frma", parentId = 'syn87682'))
-lusc_frma <- createEntity(lusc_frma)
-
-# add object into the data entity
-lusc_frma <- addObject(lusc_frma,Lusc_frma)
-
-# push the raw data into this entity
-lusc_frma <- storeEntity(entity=lusc_frma)
+HGU133a_dCHIP <- storeEntity(entity=HGU133a_dCHIP)
 #############################################################################################
 
-dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
-dir_barcode <- createEntity(dir_barcode)
+HGU133a_frma <- Data(list(name = "HGU133a_frma", parentId = 'syn87682'))
+HGU133a_frma <- createEntity(HGU133a_frma)
 
 # add object into the data entity
-dir_barcode <- addObject(dir_barcode,Dir_barcode)
+HGU133a_frma <- addObject(HGU133a_frma,HGU133A_frma)
 
 # push the raw data into this entity
-dir_barcode <- storeEntity(entity=dir_barcode)
+HGU133a_frma <- storeEntity(entity=HGU133a_frma)
+#############################################################################################
+
+HGU133a_barcode <- Data(list(name = "HGU133a barcode", parentId = 'syn87682'))
+HGU133a_barcode <- createEntity(HGU133a_barcode)
+
+# add object into the data entity
+HGU133a_barcode <- addObject(HGU133a_barcode,HGU133A_barcode)
+
+# push the raw data into this entity
+HGU133a_barcode <- storeEntity(entity=HGU133a_barcode)
 #
