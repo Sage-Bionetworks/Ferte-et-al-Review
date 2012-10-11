@@ -20,17 +20,17 @@ require(synapseClient)
 synapseLogin(username="charles.ferte@sagebase.org",password="charles")
 
 ###################################################################################
-# select dataset among Dir,Zhu, Hou and Lusc
+# select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
 ###################################################################################
-dataset <- "Lusc"
+dataset <- "HGU133A"
 
 ###################################################################################
 # load the data from Synapse
 ###################################################################################
-#Zhu <- loadEntity('syn1421817')
-#Dir <- loadEntity('syn1422422')
+Zhu <- loadEntity('syn1421817')
+Dir <- loadEntity('syn1422422')
 #Hou <- loadEntity('syn1422295')
-Lusc <- loadEntity('syn1426948')
+#Lusc <- loadEntity('syn1426948')
 
 ###################################################################################
 # where are the CEL files
@@ -46,7 +46,12 @@ Lusc_CEL <- Lusc$cacheDir
 datapath1  <-get(paste(dataset,"_CEL",sep=""))
 setwd(datapath1)
 rawdata <- ReadAffy()
-#
+
+# read the HGU133A
+lol <- c(list.files(Dir_CEL,full.names=TRUE),list.files(Zhu_CEL,full.names=TRUE))
+rawdata <- ReadAffy(filenames=as.character(lol))
+
+
 ###################################################################################
 # perform rma normalization
 ###################################################################################
@@ -77,7 +82,7 @@ assign(tmp,mas5(rawdata))
 tmp <- paste(dataset,"_frma",sep="")
 assign(tmp,frma(rawdata, summarize = "random_effect"))
 tmp1 <- paste(dataset,"_barcode",sep="")
-assign(tmp1,barcode(get(tmp)))
+assign(tmp1,barcode(get(tmp),platform=""))
 
 ###################################################################################
 # save the data in Synapse
@@ -125,14 +130,14 @@ dir_dCHIP <- addObject(dir_dCHIP,Dir_dCHIP)
 dir_dCHIP <- storeEntity(entity=dir_dCHIP)
 #############################################################################################
 
-dir_frma <- Data(list(name = "dir frma", parentId = 'syn87682'))
-dir_frma <- createEntity(dir_frma)
+lusc_frma <- Data(list(name = "lusc frma", parentId = 'syn87682'))
+lusc_frma <- createEntity(lusc_frma)
 
 # add object into the data entity
-dir_frma <- addObject(dir_frma,Dir_frma)
+lusc_frma <- addObject(lusc_frma,Lusc_frma)
 
 # push the raw data into this entity
-dir_frma <- storeEntity(entity=dir_frma)
+lusc_frma <- storeEntity(entity=lusc_frma)
 #############################################################################################
 
 dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
