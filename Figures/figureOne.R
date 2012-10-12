@@ -16,7 +16,7 @@ require(synapseClient)
 
 ## synapseLogin()
 
-## FIRST: EXTRACTING RAW DATA FROM THE CEL FILES
+## FIRST: GENERATING UN-NORMALIZED, UN-BACKGROUND CORRECTED DATA
 ## We'll use the 'rma()' function with the normalize and background arguments
 ## set to false.
 
@@ -42,10 +42,35 @@ getRawDat <- function(x){
 
 rawDatList <- lapply(celNamesList, getRawDat)
 
-fullMat <- cbind(rawDatList$zhu, 
-                 rawDatList$hou, 
-                 rawDatList$dir, 
-                 rawDatList$lusc)
+rawDatMatList <- lapply(rawDatList, exprs)
+
+featureList <- lapply(rawDatMatList, rownames)
+
+intersectFeatures <- Reduce(intersect, featureList)
+
+fullMat <- cbind(rawDatMatList$zhu[intersectFeatures, ],
+                 rawDatMatList$hou[intersectFeatures, ],
+                 rawDatMatList$dir[intersectFeatures, ],
+                 rawDatMatList$lusc[intersectFeatures, ])
+
+studyIndicator <- c(rep('zhu', ncol(rawDatMatList$zhu)),
+                    rep('hou', ncol(rawDatMatList$hou)),
+                    rep('dir', ncol(rawDatMatList$dir)),
+                    rep('lusc', ncol(rawDatMatList$lusc)))
+
+svdObj <- svd(fullMat)
+
+rawDF <- data.frame(svdObj$v[ , 1:2])
+colnames(rawDF) <- c('PrinComp1', 'PrinComp2')
+
+rawPcPlot <- ggplot(rawDF, aes(PrinComp1, PrinComp2)) +
+  geom_point(aes(colour = factor(studyIndicator),
+                 shape = factor(studyIndicator),
+                 size = 20)) +
+                   scale_size(guide = 'none')
+                    
+
+
 
 
 
