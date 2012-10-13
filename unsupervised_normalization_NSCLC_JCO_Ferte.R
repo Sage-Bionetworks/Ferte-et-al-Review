@@ -22,15 +22,15 @@ synapseLogin(username="charles.ferte@sagebase.org",password="charles")
 ###################################################################################
 # select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
 ###################################################################################
-dataset <- "HGU133A"
+dataset <- "Dir"
 
 ###################################################################################
 # load the data from Synapse
 ###################################################################################
 Zhu <- loadEntity('syn1421817')
 Dir <- loadEntity('syn1422422')
-#Hou <- loadEntity('syn1422295')
-#Lusc <- loadEntity('syn1426948')
+Hou <- loadEntity('syn1422295')
+Lusc <- loadEntity('syn1426948')
 
 ###################################################################################
 # where are the CEL files
