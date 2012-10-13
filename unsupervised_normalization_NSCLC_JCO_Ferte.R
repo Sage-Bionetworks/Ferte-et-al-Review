@@ -48,8 +48,8 @@ setwd(datapath1)
 rawdata <- ReadAffy()
 
 # read the HGU133A
-lol <- c(list.files(Dir_CEL,full.names=TRUE),list.files(Zhu_CEL,full.names=TRUE))
-rawdata <- ReadAffy(filenames=as.character(lol))
+#lol <- c(list.files(Dir_CEL,full.names=TRUE),list.files(Zhu_CEL,full.names=TRUE))
+#rawdata <- ReadAffy(filenames=as.character(lol))
 
 
 ###################################################################################
