@@ -48,7 +48,7 @@ featureList <- lapply(rawDatMatList, rownames)
 
 intersectFeatures <- Reduce(intersect, featureList)
 
-fullMat <- cbind(rawDatMatList$zhu[intersectFeatures, ],
+fullRawMat <- cbind(rawDatMatList$zhu[intersectFeatures, ],
                  rawDatMatList$hou[intersectFeatures, ],
                  rawDatMatList$dir[intersectFeatures, ],
                  rawDatMatList$lusc[intersectFeatures, ])
@@ -58,19 +58,43 @@ studyIndicator <- c(rep('zhu', ncol(rawDatMatList$zhu)),
                     rep('dir', ncol(rawDatMatList$dir)),
                     rep('lusc', ncol(rawDatMatList$lusc)))
 
-svdObj <- svd(fullMat)
+rawSvdObj <- fast.svd(fullRawMat)
 
-rawDF <- data.frame(svdObj$v[ , 1:2])
+rawDF <- data.frame(rawSvdObj$v[ , 1:2])
 colnames(rawDF) <- c('PrinComp1', 'PrinComp2')
 
 rawPcPlot <- ggplot(rawDF, aes(PrinComp1, PrinComp2)) +
   geom_point(aes(colour = factor(studyIndicator),
-                 shape = factor(studyIndicator),
                  size = 20)) +
                    scale_size(guide = 'none')
+
+## SECOND, PLOTTING MAS5 NORMALIZED DATA
+## PULL IN MAS5 DATA FROM SYNAPSE
+zhuMas5Ent <- loadEntity('syn1437053')
+houMas5Ent <- loadEntity('syn1437178')
+dirMas5Ent <- loadEntity('syn1437190')
+luscMas5Ent <- loadEntity('syn1437114')
+
+mas5EntList <- list('zhu' = zhuMas5Ent,
+                    'hou' = houMas5Ent,
+                    'dir' = dirMas5Ent,
+                    'lusc' = luscMas5Ent)
                     
+mas5DatList <- lapply(mas5EntList, function(x){
+  exprs <- exprs(x$objects[[1]])
+})
 
+fullMas5Mat <- cbind(mas5DatList$zhu[intersectFeatures, ],
+                     mas5DatList$hou[intersectFeatures, ],
+                     mas5DatList$dir[intersectFeatures, ],
+                     mas5DatList$lusc[intersectFeatures, ])
 
+mas5SvdObj <- fast.svd(fullMas5Mat)
+mas5DF <- data.frame(mas5SvdObj$v[ , 1:2])
+colnames(mas5DF) <- c('PrinComp1', 'PrinComp2')
 
-
+mas5PcPlot <- ggplot(mas5DF, aes(PrinComp1, PrinComp2)) +
+  geom_point(aes(colour = factor(studyIndicator),
+                 size = 20)) +
+                   scale_size(guide = 'none')
 
