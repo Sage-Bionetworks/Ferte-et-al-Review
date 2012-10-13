@@ -84,10 +84,8 @@ mas5DatList <- lapply(mas5EntList, function(x){
   exprs <- exprs(x$objects[[1]])
 })
 
-fullMas5Mat <- cbind(mas5DatList$zhu[intersectFeatures, ],
-                     mas5DatList$hou[intersectFeatures, ],
-                     mas5DatList$dir[intersectFeatures, ],
-                     mas5DatList$lusc[intersectFeatures, ])
+intMas5DatList <- lapply(mas5DatList, function(x){x[intersectFeatures, ]})
+fullMas5Mat <- Reduce(cbind, intMas5DatList)
 
 mas5SvdObj <- fast.svd(fullMas5Mat)
 mas5DF <- data.frame(mas5SvdObj$v[ , 1:2])
@@ -98,3 +96,18 @@ mas5PcPlot <- ggplot(mas5DF, aes(PrinComp1, PrinComp2)) +
                  size = 20)) +
                    scale_size(guide = 'none')
 
+## THIRD, PLOTTING RMA NORMALIZED DATA
+## PULL IN RMA DATA FROM SYNAPSE
+zhuRmaEnt <- loadEntity('syn1436971')
+houRmaEnt <- loadEntity('syn1437174')
+dirRmaEnt <- loadEntity('syn1437186')
+luscRmaEnt <- loadEntity('syn1437109')
+
+rmaEntList <- list('zhu' = zhuRmaEnt,
+                   'hou' = houRmaEnt,
+                   'dir' = dirRmaEnt,
+                   'lusc' = luscRmaEnt)
+
+rmaDatList <- lapply(rmaEntList, function(x){
+  exprs <- exprs(x$objects[[1]])
+})
