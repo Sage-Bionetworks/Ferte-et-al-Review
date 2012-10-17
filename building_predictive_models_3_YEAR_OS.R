@@ -31,24 +31,28 @@ dir <- dir[,tmp]
 rm(tmp)
 
 # create vectors of response( y_dir and y_zhu) of 3 year overall survival (1 alive, 0 deceased)
-y_zhu <- ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
-names(y_zhu) <- rownames(zhu_clin)
-
-y_dir <- ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
-names(y_dir) <- rownames(dir_clin)
+zhu_clin$y_zhu <- ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
+dir_clin$y_dir <- ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
 
 # first build the model based on clin variables of interest only (pStage, gender, age,smoking) (linear regression)
-fit <- glm(y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,family="binomial")
+fit <- glm(dir_clin$y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,data=as.data.frame(t(dir_clin)),family="binomial")
 summary(fit)
 confint.default(fit)
+boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS")
+stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
-#predict in 
-yhat_zhu <- predict(fit,newdata=zhu_clin[,c("P_Stage","GENDER","Age")],type="response")
+# predict in zhu
+yhat_zhu <- predict.glm(fit,newdata=as.data.frame(zhu_clin),type="response",na.action = na.omit)
 
 # second build the model based on linear regression of clin + ge features
 
-# thrird build the model based on clin + molecular features using elasticnet
 
+# third build the model based on molecular features using elasticnet
+cv.fit <- cv.glmnet(t(exprs(dir)),y=y_dir,nfolds=10,alpha=.1,family="binomial")
+plot(cv.fit)
+fit <- glmnet(family="binomial",alpha=.1,lambda=cv.fit$lambda.min,y=y_dir,x=t(exprs(dir)))
+
+yhat <- predict()
 # thrird build the model based on clin + molecular features using RandomForest
 
 # adress the results of in the VS using ROC curves
