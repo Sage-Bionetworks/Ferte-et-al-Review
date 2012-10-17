@@ -37,7 +37,13 @@ names(y_zhu) <- rownames(zhu_clin)
 y_dir <- ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
 names(y_dir) <- rownames(dir_clin)
 
-# first build the model based on clin variables only (linear regression)
+# first build the model based on clin variables of interest only (pStage, gender, age,smoking) (linear regression)
+fit <- glm(y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,family="binomial")
+summary(fit)
+confint.default(fit)
+
+#predict in 
+yhat_zhu <- predict(fit,newdata=zhu_clin[,c("P_Stage","GENDER","Age")],type="response")
 
 # second build the model based on linear regression of clin + ge features
 
