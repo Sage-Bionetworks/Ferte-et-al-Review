@@ -25,6 +25,10 @@ zhu_clin <- zhu_clin$objects$ZhuClinF
 dir_clin <- loadEntity('syn1438222')
 dir_clin <- dir_clin$objects$DirClinF
 
+# Probability of 3 year overall survival is our dependant variable (vectors of response): y_dir and y_zhu
+zhu_clin$y_zhu <- y_zhu <-  ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
+dir_clin$y_dir <-y_dir <-  ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
+
 # make data coherent for dir since there are two cel files that are not clinically annotated
 tmp <- intersect(rownames(dir_clin),sampleNames(dir))
 dir_clin <- dir_clin[tmp,]
@@ -33,6 +37,10 @@ rm(tmp)
 
 # transform zhu eset in matrix
 zhu <- exprs(zhu)
+
+# get rid of the junk features
+zhu <- zhu[-c(grep("AFFX",rownames(zhu))),]
+dir <- dir[rownames(zhu),]
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
@@ -46,14 +54,6 @@ zhu <- normalize2Reference(zhu,rowMeans(dir))
 s <- svd(cbind(dir,zhu))
 plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="after quantile normalization")
 
-# get rid of the junk features
-zhu <- zhu[-c(grep("AFFX",rownames(zhu))),]
-dir <- dir[rownames(zhu),]
-
-#check if there is any latent structure in the data (are the datasets comparable ?)
-s <- svd(cbind(dir,zhu))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="")
-
 # focus on the most variant probes
 prob.var1  <- apply(zhu,1,var)
 prob.var2 <- apply(dir,1,var)
@@ -64,15 +64,7 @@ zhu <- zhu[tmp,]
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
-black and red labels stand for the dataset of origin")
-
-
-# 
-# #check if there is any latent structure in the data (are the datasets comparable ?)
-# s <- svd(cbind(dir,zhu))
-# plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
-# black and red labels stand for the dataset of origin")
+plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="focus on the 10% top most variant features")
 
 # make the two datasets have the same mean and variance
 # Justin's function to rescale the VS to get the same mean/var than the TS
@@ -88,12 +80,8 @@ zhu <- normalize_to_X(rowMeans(dir),apply(dir,1,sd),zhu)
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
-black and red labels stand for the dataset of origin")
+plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="align mean and variance of the two datasets")
 
-# create vectors of response( y_dir and y_zhu) of 3 year overall survival (1 alive, 0 deceased)
-zhu_clin$y_zhu <- y_zhu <-  ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
-dir_clin$y_dir <-y_dir <-  ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
 
 
 # create datasets combining clin + molecular features in the same matrix (x to be the training set, z to be the validation set)
