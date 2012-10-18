@@ -26,6 +26,7 @@ houRawEnt <- loadEntity('syn1422295')
 dirRawEnt <- loadEntity('syn1422422')
 luscRawEnt <- loadEntity('syn1426948')
 
+## DEFINE getCelNames() FUNCTION
 getCelNames <- function(x){
   fileNames <- list.celfiles(path = x$cacheDir, full.names = TRUE)
 }
@@ -35,16 +36,22 @@ names(rawEntities) <- c('zhu', 'hou', 'dir', 'lusc')
 
 celNamesList <- lapply(rawEntities, getCelNames)
 
+## DEFINE getRawDat() FUNCTION
+# Merely using the rma() function to extract summarized but not normalized or
+# background-adjusted expression data
 getRawDat <- function(x){
   affyBatchObj <- ReadAffy(filenames = x)
   rawDat <- rma(affyBatchObj, normalize = FALSE, background = FALSE)
-}
+} 
 
 rawDatList <- lapply(celNamesList, getRawDat)
 
 rawDatMatList <- lapply(rawDatList, exprs)
 
 featureList <- lapply(rawDatMatList, rownames)
+
+# Since these platforms are on two different Affymetrix platforms, we use
+# the intersection of the Affymetrix probesets for comparative purposes
 
 intersectFeatures <- Reduce(intersect, featureList)
 
@@ -58,16 +65,25 @@ studyIndicator <- c(rep('zhu', ncol(rawDatMatList$zhu)),
                     rep('dir', ncol(rawDatMatList$dir)),
                     rep('lusc', ncol(rawDatMatList$lusc)))
 
-rawSvdObj <- fast.svd(fullRawMat)
+## DEFINE generatePcPlot() FUNCTION
+# Create an SVD object, make a dataframe out of the first two factors
+# and plot it using ggplot
+generatePcPlot <- function(fullMatrix){
+  require(ggplot2)
+  ## Make a ggplot-friendly dataframe from the singular value decomposition
+  svdObj <- fast.svd(fullMatrix)
+  pcDF <- data.frame(svdObj$v[ , 1:2])
+  colnames(pcDF) <- c('PrinComp1', 'PrinComp2')
+  ## Plot it
+  pcPlot <- ggplot(pcDF, aes(PrinComp1, PrinComp2)) +
+    geom_point(aes(colour = factor(studyIndicator), size = 20)) +
+    scale_size(guide = 'none')
+}
 
-rawDF <- data.frame(rawSvdObj$v[ , 1:2])
-colnames(rawDF) <- c('PrinComp1', 'PrinComp2')
-
-rawPcPlot <- ggplot(rawDF, aes(PrinComp1, PrinComp2)) +
-  geom_point(aes(colour = factor(studyIndicator),
-                 size = 20)) +
-                   scale_size(guide = 'none') +
-                   opts(title = 'Raw Unnormalized by Prin. Comp.\n')
+# Plot the raw expression data
+rawPcPlot <- generatePcPlot(fullRawMat) + 
+  opts(title = 'Raw without Normalization or Background Correction by Prin. Comp.\n')
+rawPcPlot
 
 ## SECOND, PLOTTING MAS5 NORMALIZED DATA
 ## PULL IN MAS5 DATA FROM SYNAPSE
@@ -88,15 +104,9 @@ mas5DatList <- lapply(mas5EntList, function(x){
 intMas5DatList <- lapply(mas5DatList, function(x){x[intersectFeatures, ]})
 fullMas5Mat <- Reduce(cbind, intMas5DatList)
 
-mas5SvdObj <- fast.svd(fullMas5Mat)
-mas5DF <- data.frame(mas5SvdObj$v[ , 1:2])
-colnames(mas5DF) <- c('PrinComp1', 'PrinComp2')
-
-mas5PcPlot <- ggplot(mas5DF, aes(PrinComp1, PrinComp2)) +
-  geom_point(aes(colour = factor(studyIndicator),
-                 size = 20)) +
-                   scale_size(guide = 'none') +
-                   opts(title = 'Separately MAS5 Normalized by Prin. Comp.\n')
+mas5PcPlot <- generatePcPlot(fullMas5Mat) +
+  opts(title = 'Separate MAS5 Normalization by Prin. Comp.\n')
+mas5PcPlot
 
 ## THIRD, PLOTTING RMA NORMALIZED DATA
 ## PULL IN RMA DATA FROM SYNAPSE
