@@ -28,57 +28,134 @@ dir_clin <- dir_clin$objects$DirClinF
 # make data coherent for dir since there are two cel files that are not clinically annotated
 tmp <- intersect(rownames(dir_clin),sampleNames(dir))
 dir_clin <- dir_clin[tmp,]
-dir <- dir[,tmp]
+dir <- exprs(dir)[,tmp]
 rm(tmp)
 
-# quantile normalize zhu to have the same disribution than dir (make them comparable)
-zhu <- normalize2Reference(exprs(zhu),rowMeans(exprs(dir)))
+# transform zhu eset in matrix
+zhu <- exprs(zhu)
+
+par(mfrow=c(2,2))
+
+#check if there is any latent structure in the data (are the datasets comparable ?)
+s <- svd(cbind(dir,zhu))
+plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
+black and red labels stand for the dataset of origin")
+
+# get rid of the junk features
+zhu <- zhu[-c(grep("AFFX",rownames(zhu))),]
+dir <- dir[rownames(zhu),]
+
+#check if there is any latent structure in the data (are the datasets comparable ?)
+s <- svd(cbind(dir,zhu))
+plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
+black and red labels stand for the dataset of origin")
+
+# focus on the most variant probes
+prob.var1  <- apply(zhu,1,var)
+prob.var2 <- apply(dir,1,var)
+mean.prob.var <- apply(cbind(prob.var1,prob.var2),1,mean)
+tmp <- which(mean.prob.var>quantile(mean.prob.var,probs=.9))
+dir <- dir[tmp,]
+zhu <- zhu[tmp,]
+
+#check if there is any latent structure in the data (are the datasets comparable ?)
+s <- svd(cbind(dir,zhu))
+plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
+black and red labels stand for the dataset of origin")
+
+# # quantile normalize zhu to have the same disribution than dir (make them comparable)
+# zhu <- normalize2Reference(zhu,rowMeans(dir))
+# 
+# #check if there is any latent structure in the data (are the datasets comparable ?)
+# s <- svd(cbind(dir,zhu))
+# plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
+# black and red labels stand for the dataset of origin")
+
+# make the two datasets have the same mean and variance
+# Justin's function to rescale the VS to get the same mean/var than the TS
+normalize_to_X <- function(mean.x, sd.x, Y){
+  m.y <- rowMeans(Y)
+  sd.y <- apply(Y, 1, sd)
+  Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
+  Y.adj[sd.y == 0] <- mean.x[sd.y==0]
+  Y.adj
+}
+
+zhu <- normalize_to_X(rowMeans(dir),apply(dir,1,sd),zhu)
+
+#check if there is any latent structure in the data (are the datasets comparable ?)
+s <- svd(cbind(dir,zhu))
+plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="PCA on the dir & zhu datasetsgrouped together
+black and red labels stand for the dataset of origin")
 
 # create vectors of response( y_dir and y_zhu) of 3 year overall survival (1 alive, 0 deceased)
 zhu_clin$y_zhu <- y_zhu <-  ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
 dir_clin$y_dir <-y_dir <-  ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
 
-######################################################################################################################################
-# first build the model based on clin variables of interest only (pStage, gender, age,smoking) (linear regression)
-######################################################################################################################################
 
+# create datasets combining clin + molecular features in the same matrix (x to be the training set, z to be the validation set)
+x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)),as.numeric(as.factor(dir_clin$GENDER)),as.numeric(dir_clin$Age))
+rownames(x)[(length(rownames(x))-2):length(rownames(x))] <- c("P_Stage","GENDER","Age")
+
+z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)),as.numeric(as.factor(zhu_clin$GENDER)),as.numeric(zhu_clin$Age))
+rownames(z)[(length(rownames(z))-2):length(rownames(z))] <- c("P_Stage","GENDER","Age")
+
+
+######################################################################################################################################
+# 1. build the model based on clin variables of interest only (pStage, gender, age,smoking) (linear regression)
+######################################################################################################################################
 fit <- glm(dir_clin$y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,data=as.data.frame(t(dir_clin)),family="binomial")
-summary(fit)
-confint.default(fit)
-boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS")
-stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
 # predict in zhu
-yhat_zhu <- predict.glm(fit,newdata=as.data.frame(zhu_clin),type="response",na.action = na.omit)
+#yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response",na.action = na.omit)
+#yhat
+
+par(mfrow=c(1,1))
+boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical variables only")
+stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
+
+
 
 ######################################################################################################################################
-# second build the model based on linear regression of clin + ge features
+# 2. build the model based on linear regression of clin + gene expression features
 ######################################################################################################################################
 
+x1 <- as.data.frame(t(x))
+z1 <- as.data.frame(t(rbind(z,zhu_clin$y_dir)))
 
+fit <- glm(dir_clin$y_dir~.,data=x1,family="binomial")
 
-######################################################################################################################################
-# third build the model based on molecular features using elasticnet in a more ridge tend (alpha=.1)
-######################################################################################################################################
+par(mfrow=c(1,1))
+boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - molecular+clinical variables")
+stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
-# make zhu have the same mean and var that dir
+#########################################################################################################################################
+# 3. build the model based on molecular features using elasticnet in a more ridge tend (alpha=.1) but not penalizing the clinical features
+#########################################################################################################################################
+
 set.seed(1234567)
-identical(colnames(exprs(dir)),rownames(dir_clin))
-x <- rbind(exprs(dir),as.numeric(as.factor(dir_clin$P_Stage)))
-rownames(x)[22283] <- "P_Stage"
-pen <- c(rep(1,times=length(rownames(exprs(dir)))),rep(0,times=1))
-
-cv.fit <- cv.glmnet(x=t(exprs(dir)), y=factor(y_dir), nfolds=10, alpha=.1, family="binomial",penalty.factor=pen)
+pen <- c(rep(1,times=length(rownames(dir))),rep(0,times=3))
+cv.fit <- cv.glmnet(x=t(x), y=factor(y_dir), nfolds=10, alpha=.1, family="binomial",penalty.factor=pen)
 plot(cv.fit)
-fit <- glmnet(x=t(exprs(dir)),y=factor(y_dir),family="binomial",alpha=.1,lambda=cv.fit$lambda.min,penalty.factor=pen)
+fit <- glmnet(x=t(x),y=factor(y_dir),family="binomial",alpha=.1,lambda=cv.fit$lambda.min,penalty.factor=pen)
 table(as.numeric(fit$beta)!=0)    
-yhat <- predict(fit, t(zhu),type="response")
-boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS")
+
+yhat <- predict(fit,t(z),type="response",s="lambda.min")
+
+
+par(mfrow=c(1,1))
+boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS", main="elastic net")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
+######################################################################################################################################
+# 4. build the model based on clin + molecular features using RandomForest
+######################################################################################################################################
 
 
-# third build the model based on clin + molecular features using RandomForest
+fit <- randomForest(x=t(x),y=factor(y_dir),ntree=100, do.trace=10)
+yhat <- predict(fit,t(z),type="prob")
+boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main= "Random Forest")
+stripchart(yhat~y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
 ######################################################################################################################################
 # plot a ROC curve to asses the performance of our model
@@ -92,5 +169,5 @@ plot(Perf, col="royalblue",main="predicting KRAS G12C in ccle
 text(x=.7,y=.4,labels=paste("AUC=",format(x=AUC@y.values,digits=2)),col="royalblue")
 
 
-# adress the same results of AUC in boxplots with their IC95
+
 
