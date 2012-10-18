@@ -66,7 +66,8 @@ colnames(rawDF) <- c('PrinComp1', 'PrinComp2')
 rawPcPlot <- ggplot(rawDF, aes(PrinComp1, PrinComp2)) +
   geom_point(aes(colour = factor(studyIndicator),
                  size = 20)) +
-                   scale_size(guide = 'none')
+                   scale_size(guide = 'none') +
+                   opts(title = 'Raw Unnormalized by Prin. Comp.\n')
 
 ## SECOND, PLOTTING MAS5 NORMALIZED DATA
 ## PULL IN MAS5 DATA FROM SYNAPSE
@@ -94,13 +95,14 @@ colnames(mas5DF) <- c('PrinComp1', 'PrinComp2')
 mas5PcPlot <- ggplot(mas5DF, aes(PrinComp1, PrinComp2)) +
   geom_point(aes(colour = factor(studyIndicator),
                  size = 20)) +
-                   scale_size(guide = 'none')
+                   scale_size(guide = 'none') +
+                   opts(title = 'Separately MAS5 Normalized by Prin. Comp.\n')
 
 ## THIRD, PLOTTING RMA NORMALIZED DATA
 ## PULL IN RMA DATA FROM SYNAPSE
 zhuRmaEnt <- loadEntity('syn1436971')
 houRmaEnt <- loadEntity('syn1437174')
-dirRmaEnt <- loadEntity('syn1437186')
+dirRmaEnt <- loadEntity('syn1440819')
 luscRmaEnt <- loadEntity('syn1437109')
 
 rmaEntList <- list('zhu' = zhuRmaEnt,
@@ -111,3 +113,16 @@ rmaEntList <- list('zhu' = zhuRmaEnt,
 rmaDatList <- lapply(rmaEntList, function(x){
   exprs <- exprs(x$objects[[1]])
 })
+
+intRmaDatList <- lapply(rmaDatList, function(x){x[intersectFeatures, ]})
+fullRmaMat <- Reduce(cbind, intRmaDatList)
+
+rmaSvdObj <- fast.svd(fullRmaMat)
+rmaDF <- data.frame(rmaSvdObj$v[ , 1:2])
+colnames(rmaDF) <- c('PrinComp1', 'PrinComp2')
+
+rmaPcPlot <- ggplot(rmaDF, aes(PrinComp1, PrinComp2)) +
+  geom_point(aes(colour = factor(studyIndicator),
+                 size = 20)) +
+                   scale_size(guide = 'none') + 
+                   opts(title = 'Separately RMA Normalized by Prin. Comp.\n')
