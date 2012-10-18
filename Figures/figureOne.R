@@ -127,12 +127,27 @@ rmaDatList <- lapply(rmaEntList, function(x){
 intRmaDatList <- lapply(rmaDatList, function(x){x[intersectFeatures, ]})
 fullRmaMat <- Reduce(cbind, intRmaDatList)
 
-rmaSvdObj <- fast.svd(fullRmaMat)
-rmaDF <- data.frame(rmaSvdObj$v[ , 1:2])
-colnames(rmaDF) <- c('PrinComp1', 'PrinComp2')
+rmaPcPlot <- generatePcPlot(fullRmaMat) + 
+  opts(title = 'Seperate RMA Normalization by Prin. Comp.\n')
+rmaPcPlot
 
-rmaPcPlot <- ggplot(rmaDF, aes(PrinComp1, PrinComp2)) +
-  geom_point(aes(colour = factor(studyIndicator),
-                 size = 20)) +
-                   scale_size(guide = 'none') + 
-                   opts(title = 'Separately RMA Normalized by Prin. Comp.\n')
+## FOURTH, PLOTTING GCRMA NORMALIZED DATA
+zhuGcrmaEnt <- loadEntity('syn1437007')
+houGcrmaEnt <- loadEntity('syn1437176')
+dirGcrmaEnt <- loadEntity('syn1437188')
+luscGcrmaEnt <- loadEntity('syn1437111')
+
+gcrmaEntList <- list('zhu' = zhuGcrmaEnt,
+                     'hou' = houGcrmaEnt,
+                     'dir' = dirGcrmaEnt,
+                     'lusc' = luscGcrmaEnt)
+
+gcrmaDatList <- lapply(gcrmaEntList, function(x){
+  exprs <- exprs(x$objects[[1]])
+})
+
+## PUT ALL THE PLOTS TOGETHER
+# Source in a multiplot function
+multiplotEnt <- loadEntity('syn274067')
+attach(multiplotEnt)
+fullFigureOne <- multiplot(rawPcPlot, mas5PcPlot, rmaPcPlot, cols = 2)
