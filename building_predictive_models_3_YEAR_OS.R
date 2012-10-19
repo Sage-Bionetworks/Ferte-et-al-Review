@@ -95,10 +95,13 @@ summary(fit)
 yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response")
 yhat
 
-## Brian there is a problem just above -> yhat should have only 62 values !!! and not 299 !
+## Charles -> Brian: there is a problem just above -> yhat should have only 62 values !!! and not 299 !
+
 par(mfrow=c(1,1))
 boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical features only")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
+
+yhat1 <- yhat
 
 ######################################################################################################################################
 # 2. build a model based on logistic regression of clin + gene expression features
@@ -119,22 +122,23 @@ fit <- glm(dir_clin$y_dir~.,data=as.data.frame(t(x)),family="binomial")
 yhat <- predict(fit,newdata=as.data.frame(t(z)),type="response")
 yhat
 
-## Brian there is a problem just above -> yhat should have only 62 values !!! and not 299 !
 par(mfrow=c(1,1))
 boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical + molecular features")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
+yhat2 <- yhat
 
 #########################################################################################################################################
-# 3. build the model based on molecular features using elasticnet in a more ridge tend (alpha=.1) but not penalizing the clinical features
+# 3. build the model based on molecular features using elasticnet 
+#  not penalizing the clinical features in a more ridge setting (alpha=.1) 
 #########################################################################################################################################
+
+# let pen be a vector of penalty factors for each coefficient. we want to preserve the pathological stage in the model  
+pen <- c(rep(1,times=length(rownames(dir))),c(0,1,1))
 
 set.seed(1234567)
-pen <- c(rep(1,times=length(rownames(dir))),rep(0,times=3))
 cv.fit <- cv.glmnet(x=t(x), y=factor(y_dir), nfolds=10, alpha=.1, family="binomial",penalty.factor=pen)
 plot(cv.fit)
 fit <- glmnet(x=t(x),y=factor(y_dir),family="binomial",alpha=.1,lambda=cv.fit$lambda.min,penalty.factor=pen)
-table(as.numeric(fit$beta)!=0)    
-
 yhat <- predict(fit,t(z),type="response",s="lambda.min")
 
 
@@ -142,27 +146,36 @@ par(mfrow=c(1,1))
 boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS", main="elastic net")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
+yhat3 <- yhat
+
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
 ######################################################################################################################################
 
 
-fit <- randomForest(x=t(x),y=factor(y_dir),ntree=100, do.trace=10)
+setseed(1234567)
+fit <- randomForest(x=t(x),y=factor(y_dir),ntree=80, do.trace=10)
 yhat <- predict(fit,t(z),type="prob")
+yhat <- yhat[,2]
 boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main= "Random Forest")
 stripchart(yhat~y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
+yhat4 <- yhat
+
 ######################################################################################################################################
-# plot a ROC curve to asses the performance of our model
+# plot a ROC curve to asses the performance of our models
 ######################################################################################################################################
 require(ROCR)
-Pred <- prediction(as.numeric(yhat),as.numeric(y_zhu))
+Pred <- prediction(as.numeric(yhat3),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
 AUC <- performance(prediction.obj=Pred,"auc")
-plot(Perf, col="royalblue",main="predicting KRAS G12C in ccle 
-(modele trained in tcga + chemores)")
-text(x=.7,y=.4,labels=paste("AUC=",format(x=AUC@y.values,digits=2)),col="royalblue")
+plot(Perf, col="royalblue",main="performance of our models in Zhu",lwd=2)
+text(x=.5,y=.4,labels=paste("Elastic Net AUC=",format(x=AUC@y.values,digits=2)),col="royalblue",adj=0)
 
-
+Pred <- prediction(as.numeric(yhat4),as.numeric(y_zhu))
+Perf <- performance(prediction.obj=Pred,"tpr","fpr")
+AUC <- performance(prediction.obj=Pred,"auc")
+plot(Perf, col="orange",add=TRUE,lwd=TRUE)
+text(x=.5,y=.3,labels=paste("Random Forest AUC=",format(x=AUC@y.values,digits=2)),col="orange",adj=0)
 
 
