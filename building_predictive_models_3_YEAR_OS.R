@@ -90,17 +90,15 @@ rm(s)
 ######################################################################################################################################
 fit <- glm(dir_clin$y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,data=as.data.frame(t(dir_clin)),family="binomial")
 summary(fit)
+
 #predict in zhu
-yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response",na.action = na.omit)
+yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response")
 yhat
 
 ## Brian there is a problem just above -> yhat should have only 62 values !!! and not 299 !
-
-
 par(mfrow=c(1,1))
-boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical variables only")
-stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
-
+boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical features only")
+stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
 ######################################################################################################################################
 # 2. build a model based on logistic regression of clin + gene expression features
@@ -117,9 +115,14 @@ rownames(z)[(length(rownames(z))-2):length(rownames(z))] <- c("P_Stage","GENDER"
 
 fit <- glm(dir_clin$y_dir~.,data=as.data.frame(t(x)),family="binomial")
 
+#predict in zhu
+yhat <- predict(fit,newdata=as.data.frame(t(z)),type="response")
+yhat
+
+## Brian there is a problem just above -> yhat should have only 62 values !!! and not 299 !
 par(mfrow=c(1,1))
-boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - molecular+clinical variables")
-stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
+boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical + molecular features")
+stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
 #########################################################################################################################################
 # 3. build the model based on molecular features using elasticnet in a more ridge tend (alpha=.1) but not penalizing the clinical features
