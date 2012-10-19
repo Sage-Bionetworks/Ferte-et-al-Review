@@ -91,13 +91,9 @@ rm(s)
 
 dim(dir_clin)
 
-fit <- glm(dir_clin$y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,data=as.data.frame(t(dir_clin)),family="binomial")
+fit <- glm(y_dir ~ P_Stage , data = dir_clin, family = "binomial")
 summary(fit)
-
-#predict in zhu
-dim(zhu_clin)
-
-yhat <- predict(object=fit,as.data.frame(zhu_clin),type="response")
+yhat <- predict(fit, zhu_clin, type = "response")
 length(yhat)
 
 ## Charles -> Brian: there is a problem just above -> yhat should have only 62 values !!! and not 299 !
