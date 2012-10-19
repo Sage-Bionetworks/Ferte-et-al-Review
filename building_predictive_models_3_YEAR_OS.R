@@ -45,14 +45,14 @@ dir <- dir[rownames(zhu),]
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
 par(mfrow=c(2,2))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="initial datasets")
+plot(s$v[,1],s$v[,2],col=c(rep("royalblue",times=299),rep("orange",times=62)),pch=20,xlab="PC1",ylab="PC2",main="initial datasets",cex=.5)
 
 # quantile normalize zhu to have the same disribution than dir (make them comparable)
 zhu <- normalize2Reference(zhu,rowMeans(dir))
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="after quantile normalization")
+plot(s$v[,1],s$v[,2],col=c(rep("royalblue",times=299),rep("orange",times=62)),pch=20,xlab="PC1",ylab="PC2",main="after quantile normalization",cex=.5)
 
 # focus on the most variant probes
 prob.var1  <- apply(zhu,1,var)
@@ -64,7 +64,7 @@ zhu <- zhu[tmp,]
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="focus on the 10% top most variant features")
+plot(s$v[,1],s$v[,2],col=c(rep("royalblue",times=299),rep("orange",times=62)),pch=20,xlab="PC1",ylab="PC2",main="focus on the 10% top most variant features",cex=.5)
 
 # make the two datasets have the same mean and variance
 # Justin's function to rescale the VS to get the same mean/var than the TS
@@ -80,29 +80,20 @@ zhu <- normalize_to_X(rowMeans(dir),apply(dir,1,sd),zhu)
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
-plot(s$v[,1],s$v[,2],col=c(rep("black",times=299),rep("red",times=62)),pch=20,xlab="PC1",ylab="PC2",main="align mean and variance of the two datasets")
+plot(s$v[,1],s$v[,2],col=c(rep("royalblue",times=299),rep("orange",times=62)),pch=20,xlab="PC1",ylab="PC2",main="align mean and variance of the two datasets",cex=.5)
 
-
-
-# create datasets combining clin + molecular features in the same matrix (x to be the training set, z to be the validation set)
-x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)),as.numeric(as.factor(dir_clin$GENDER)),as.numeric(dir_clin$Age))
-rownames(x)[(length(rownames(x))-2):length(rownames(x))] <- c("P_Stage","GENDER","Age")
-
-z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)),as.numeric(as.factor(zhu_clin$GENDER)),as.numeric(zhu_clin$Age))
-rownames(z)[(length(rownames(z))-2):length(rownames(z))] <- c("P_Stage","GENDER","Age")
 
 
 ######################################################################################################################################
-# 1. build the model based on clin variables of interest only (pStage, gender, age,smoking) (linear regression)
+# 1. build a model based on clin variables of interest only (pStage, gender, age,smoking) (logisitic regression)
 ######################################################################################################################################
 fit <- glm(dir_clin$y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,data=as.data.frame(t(dir_clin)),family="binomial")
-
+summary(fit)
 #predict in zhu
 yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response",na.action = na.omit)
 yhat
 
 ## there is a problem here -> yhat should have only 62 coeff !!! and not 299 !
-
 par(mfrow=c(1,1))
 boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical variables only")
 stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
@@ -110,8 +101,15 @@ stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE
 
 
 ######################################################################################################################################
-# 2. build the model based on linear regression of clin + gene expression features
+# 2. build a model based on logistic regression of clin + gene expression features
 ######################################################################################################################################
+
+# first create datasets combining clin + molecular features in the same matrix (x to be the training set, z to be the validation set)
+x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)),as.numeric(as.factor(dir_clin$GENDER)),as.numeric(dir_clin$Age))
+rownames(x)[(length(rownames(x))-2):length(rownames(x))] <- c("P_Stage","GENDER","Age")
+
+z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)),as.numeric(as.factor(zhu_clin$GENDER)),as.numeric(zhu_clin$Age))
+rownames(z)[(length(rownames(z))-2):length(rownames(z))] <- c("P_Stage","GENDER","Age")
 
 x1 <- as.data.frame(t(x))
 z1 <- as.data.frame(t(rbind(z,zhu_clin$y_dir)))
