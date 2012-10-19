@@ -155,6 +155,28 @@ gcrmaPcPlot <- generatePcPlot(fullGcrmaMat) +
   opts(title = 'Separate GCRMA Normalization by Prin. Comp.\n')
 gcrmaPcPlot
 
+## FIFTH, PLOTTING DCHIP NORMALIZED DATA
+zhuDchipEnt <- loadEntity('syn1437063')
+houDchipEnt <- loadEntity('syn1437180')
+dirDchipEnt <- loadEntity('syn1437192')
+luscDchipEnt <- loadEntity('syn1437118')
+
+dchipEntList <- list('zhu' = zhuDchipEnt,
+                     'hou' = houDchipEnt,
+                     'dir' = dirDchipEnt,
+                     'lusc' = luscDchipEnt)
+
+dchipDatList <- lapply(dchipEntLIst, function(x){
+  exprs <- exprs(x$objects[[1]])
+})
+
+intDchipDatList <- lapply(dchipDatList, function(x){x[intersectFeatures, ]})
+fullDchipMat <- Reduce(cbind, intDchipDatList)
+
+dchipPcPlot <- generatePcPlot(fullDchipMat) +
+  opts(title = 'Separate dCHIP Normalization by Prin. Comp.\n')
+dchipPcPlot
+
 ## PUT ALL THE PLOTS TOGETHER
 # Source in a multiplot function
 multiplotEnt <- loadEntity('syn274067')
