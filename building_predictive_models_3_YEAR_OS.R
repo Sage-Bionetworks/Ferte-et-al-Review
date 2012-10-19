@@ -61,6 +61,7 @@ mean.prob.var <- apply(cbind(prob.var1,prob.var2),1,mean)
 tmp <- which(mean.prob.var>quantile(mean.prob.var,probs=.9))
 dir <- dir[tmp,]
 zhu <- zhu[tmp,]
+rm(tmp,mean.prob.var,prob.var1,prob.var2)
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
@@ -81,7 +82,7 @@ zhu <- normalize_to_X(rowMeans(dir),apply(dir,1,sd),zhu)
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
 plot(s$v[,1],s$v[,2],col=c(rep("royalblue",times=299),rep("orange",times=62)),pch=20,xlab="PC1",ylab="PC2",main="align mean and variance of the two datasets",cex=.5)
-
+rm(s)
 
 
 ######################################################################################################################################
@@ -93,28 +94,28 @@ summary(fit)
 yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response",na.action = na.omit)
 yhat
 
-## there is a problem here -> yhat should have only 62 coeff !!! and not 299 !
+## Brian there is a problem just above -> yhat should have only 62 values !!! and not 299 !
+
+
 par(mfrow=c(1,1))
 boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical variables only")
 stripchart(fit$fitted.values~dir_clin$y_dir,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
-
 
 
 ######################################################################################################################################
 # 2. build a model based on logistic regression of clin + gene expression features
 ######################################################################################################################################
 
-# first create datasets combining clin + molecular features in the same matrix (x to be the training set, z to be the validation set)
+# first create datasets combining clin + molecular features in the same matrix 
+# x to be the training set, z to be the validation set
+
 x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)),as.numeric(as.factor(dir_clin$GENDER)),as.numeric(dir_clin$Age))
 rownames(x)[(length(rownames(x))-2):length(rownames(x))] <- c("P_Stage","GENDER","Age")
 
 z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)),as.numeric(as.factor(zhu_clin$GENDER)),as.numeric(zhu_clin$Age))
 rownames(z)[(length(rownames(z))-2):length(rownames(z))] <- c("P_Stage","GENDER","Age")
 
-x1 <- as.data.frame(t(x))
-z1 <- as.data.frame(t(rbind(z,zhu_clin$y_dir)))
-
-fit <- glm(dir_clin$y_dir~.,data=x1,family="binomial")
+fit <- glm(dir_clin$y_dir~.,data=as.data.frame(t(x)),family="binomial")
 
 par(mfrow=c(1,1))
 boxplot(fit$fitted.values~dir_clin$y_dir,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - molecular+clinical variables")
