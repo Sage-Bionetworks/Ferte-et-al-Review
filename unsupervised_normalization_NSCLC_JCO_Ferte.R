@@ -45,7 +45,7 @@ Lusc_CEL <- Lusc$cacheDir
 ###################################################################################
 datapath1  <-get(paste(dataset,"_CEL",sep=""))
 setwd(datapath1)
-rawdata <- ReadAffy()
+rawdata <- ReadAffy(filenames=list.celfiles(datapath1))
 
 # read the HGU133A
 #lol <- c(list.files(Dir_CEL,full.names=TRUE),list.files(Zhu_CEL,full.names=TRUE))
