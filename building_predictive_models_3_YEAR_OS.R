@@ -88,12 +88,17 @@ rm(s)
 ######################################################################################################################################
 # 1. build a model based on clin variables of interest only (pStage, gender, age,smoking) (logisitic regression)
 ######################################################################################################################################
+
+dim(dir_clin)
+
 fit <- glm(dir_clin$y_dir~dir_clin$P_Stage + dir_clin$GENDER + dir_clin$Age,data=as.data.frame(t(dir_clin)),family="binomial")
 summary(fit)
 
 #predict in zhu
-yhat <- predict(fit,newdata=as.data.frame(t(zhu_clin)),type="response")
-yhat
+dim(zhu_clin)
+
+yhat <- predict(object=fit,as.data.frame(zhu_clin),type="response")
+length(yhat)
 
 ## Charles -> Brian: there is a problem just above -> yhat should have only 62 values !!! and not 299 !
 
