@@ -1,4 +1,4 @@
-# Charles Ferté,MD,MSc
+# Charles Ferté,MD MSc
 # 10/11/2012
 # Sage Bionetworks
 
@@ -89,6 +89,8 @@ rm(s)
 # 1. build a model based on clin variables of interest only (pStage, gender, age,smoking) (logisitic regression)
 ######################################################################################################################################
 
+dir_clin$P_Stage <- factor(dir_clin$P_Stage)
+zhu_clin$P_Stage <- factor(zhu_clin$P_Stage, levels=levels(dir_clin$P_Stage))
 dim(dir_clin)
 
 fit <- glm(y_dir ~ P_Stage , data = dir_clin, family = "binomial")
@@ -121,7 +123,7 @@ fit <- glm(dir_clin$y_dir~.,data=as.data.frame(t(x)),family="binomial")
 
 #predict in zhu
 yhat <- predict(fit,newdata=as.data.frame(t(z)),type="response")
-yhat
+length(yhat)
 
 par(mfrow=c(1,1))
 boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical + molecular features")
@@ -166,6 +168,7 @@ yhat4 <- yhat
 ######################################################################################################################################
 # plot a ROC curve to asses the performance of our models
 ######################################################################################################################################
+
 require(ROCR)
 Pred <- prediction(as.numeric(yhat3),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
