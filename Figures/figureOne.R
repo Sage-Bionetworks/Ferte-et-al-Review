@@ -16,6 +16,36 @@ require(synapseClient)
 
 ## synapseLogin()
 
+
+## DEFINE FUNCTIONS
+## DEFINE getCelNames() FUNCTION
+getCelNames <- function(x){
+  fileNames <- list.celfiles(path = x$cacheDir, full.names = TRUE)
+}
+
+## DEFINE getRawDat() FUNCTION
+# Merely using the rma() function to extract summarized but not normalized or
+# background-adjusted expression data
+getRawDat <- function(x){
+  affyBatchObj <- ReadAffy(filenames = x)
+  rawDat <- rma(affyBatchObj, normalize = FALSE, background = FALSE)
+}
+
+## DEFINE generatePcPlot() FUNCTION
+# Create an SVD object, make a dataframe out of the first two factors
+# and plot it using ggplot
+generatePcPlot <- function(fullMatrix){
+  require(ggplot2)
+  ## Make a ggplot-friendly dataframe from the singular value decomposition
+  svdObj <- fast.svd(fullMatrix)
+  pcDF <- data.frame(svdObj$v[ , 1:2])
+  colnames(pcDF) <- c('PrinComp1', 'PrinComp2')
+  ## Plot it
+  pcPlot <- ggplot(pcDF, aes(PrinComp1, PrinComp2)) +
+    geom_point(aes(colour = factor(studyIndicator), size = 20)) +
+    scale_size(guide = 'none')
+}
+
 ## FIRST: GENERATING UN-NORMALIZED, UN-BACKGROUND CORRECTED DATA
 ## We'll use the 'rma()' function with the normalize and background arguments
 ## set to false.
@@ -26,23 +56,10 @@ houRawEnt <- loadEntity('syn1422295')
 dirRawEnt <- loadEntity('syn1422422')
 luscRawEnt <- loadEntity('syn1426948')
 
-## DEFINE getCelNames() FUNCTION
-getCelNames <- function(x){
-  fileNames <- list.celfiles(path = x$cacheDir, full.names = TRUE)
-}
-
 rawEntities <- list(zhuRawEnt, houRawEnt, dirRawEnt, luscRawEnt)
 names(rawEntities) <- c('zhu', 'hou', 'dir', 'lusc')
 
 celNamesList <- lapply(rawEntities, getCelNames)
-
-## DEFINE getRawDat() FUNCTION
-# Merely using the rma() function to extract summarized but not normalized or
-# background-adjusted expression data
-getRawDat <- function(x){
-  affyBatchObj <- ReadAffy(filenames = x)
-  rawDat <- rma(affyBatchObj, normalize = FALSE, background = FALSE)
-} 
 
 rawDatList <- lapply(celNamesList, getRawDat)
 
@@ -64,21 +81,6 @@ studyIndicator <- c(rep('zhu', ncol(rawDatMatList$zhu)),
                     rep('hou', ncol(rawDatMatList$hou)),
                     rep('dir', ncol(rawDatMatList$dir)),
                     rep('lusc', ncol(rawDatMatList$lusc)))
-
-## DEFINE generatePcPlot() FUNCTION
-# Create an SVD object, make a dataframe out of the first two factors
-# and plot it using ggplot
-generatePcPlot <- function(fullMatrix){
-  require(ggplot2)
-  ## Make a ggplot-friendly dataframe from the singular value decomposition
-  svdObj <- fast.svd(fullMatrix)
-  pcDF <- data.frame(svdObj$v[ , 1:2])
-  colnames(pcDF) <- c('PrinComp1', 'PrinComp2')
-  ## Plot it
-  pcPlot <- ggplot(pcDF, aes(PrinComp1, PrinComp2)) +
-    geom_point(aes(colour = factor(studyIndicator), size = 20)) +
-    scale_size(guide = 'none')
-}
 
 # Plot the raw expression data
 rawPcPlot <- generatePcPlot(fullRawMat) + 
@@ -128,14 +130,14 @@ intRmaDatList <- lapply(rmaDatList, function(x){x[intersectFeatures, ]})
 fullRmaMat <- Reduce(cbind, intRmaDatList)
 
 rmaPcPlot <- generatePcPlot(fullRmaMat) + 
-  opts(title = 'Seperate RMA Normalization by Prin. Comp.\n')
+  opts(title = 'Separate RMA Normalization by Prin. Comp.\n')
 rmaPcPlot
 
 ## FOURTH, PLOTTING GCRMA NORMALIZED DATA
 zhuGcrmaEnt <- loadEntity('syn1437007')
 houGcrmaEnt <- loadEntity('syn1437176')
 dirGcrmaEnt <- loadEntity('syn1437188')
-luscGcrmaEnt <- loadEntity('syn1437111')
+luscGcrmaEnt <- loadEntity('syn1445137')
 
 gcrmaEntList <- list('zhu' = zhuGcrmaEnt,
                      'hou' = houGcrmaEnt,
@@ -146,8 +148,41 @@ gcrmaDatList <- lapply(gcrmaEntList, function(x){
   exprs <- exprs(x$objects[[1]])
 })
 
+intGcrmaDatList <- lapply(gcrmaDatList, function(x){x[intersectFeatures, ]})
+fullGcrmaMat <- Reduce(cbind, intGcrmaDatList)
+
+gcrmaPcPlot <- generatePcPlot(fullGcrmaMat) +
+  opts(title = 'Separate GCRMA Normalization by Prin. Comp.\n')
+gcrmaPcPlot
+
+## FIFTH, PLOTTING DCHIP NORMALIZED DATA
+zhuDchipEnt <- loadEntity('syn1437063')
+houDchipEnt <- loadEntity('syn1437180')
+dirDchipEnt <- loadEntity('syn1437192')
+luscDchipEnt <- loadEntity('syn1437118')
+
+dchipEntList <- list('zhu' = zhuDchipEnt,
+                     'hou' = houDchipEnt,
+                     'dir' = dirDchipEnt,
+                     'lusc' = luscDchipEnt)
+
+dchipDatList <- lapply(dchipEntLIst, function(x){
+  exprs <- exprs(x$objects[[1]])
+})
+
+intDchipDatList <- lapply(dchipDatList, function(x){x[intersectFeatures, ]})
+fullDchipMat <- Reduce(cbind, intDchipDatList)
+
+dchipPcPlot <- generatePcPlot(fullDchipMat) +
+  opts(title = 'Separate dCHIP Normalization by Prin. Comp.\n')
+dchipPcPlot
+
 ## PUT ALL THE PLOTS TOGETHER
 # Source in a multiplot function
 multiplotEnt <- loadEntity('syn274067')
 attach(multiplotEnt)
-fullFigureOne <- multiplot(rawPcPlot, mas5PcPlot, rmaPcPlot, cols = 2)
+fullFigureOne <- multiplot(rawPcPlot, 
+                           mas5PcPlot, 
+                           rmaPcPlot, 
+                           gcrmaPcPlot,
+                           cols = 2)
