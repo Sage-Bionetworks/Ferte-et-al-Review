@@ -3,7 +3,8 @@
 # Sage Bionetworks
 
 # code to develop the model in the Director's dataset (TS) and validate it in the Zhu dataset (VS)
-# we want to predict the 3 year propbability of OS
+# the dependant variable (i.e. variable to be predicted) is the 3 year propbability of OS
+
 
 # load the packages that are neeeded
 require(glmnet)
@@ -12,6 +13,12 @@ require(synapseClient)
 require(caret)
 require(affy)
 synapseLogin(username="charles.ferte@sagebase.org",password="charles")
+
+
+######################################################################################################################################
+# 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
+######################################################################################################################################
+
 
 # load the rma normalized data from synapse
 zhu <- loadEntity('syn1436971')
@@ -86,7 +93,7 @@ rm(s)
 
 
 ######################################################################################################################################
-# 1. build a model based on clin variables of interest only (pStage, gender, age,smoking) (logisitic regression)
+# 2. build a model based on clin variables of interest only (pStage, gender, age) (logisitic regression)
 ######################################################################################################################################
 
 dir_clin$P_Stage <- factor(dir_clin$P_Stage)
@@ -96,48 +103,41 @@ dim(dir_clin)
 fit <- glm(y_dir ~ P_Stage , data = dir_clin, family = "binomial")
 summary(fit)
 yhat <- predict(fit, zhu_clin, type = "response")
-length(yhat)
 
-## Charles -> Brian: there is a problem just above -> yhat should have only 62 values !!! and not 299 !
-
-par(mfrow=c(1,1))
-boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical features only")
-stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
-
+par(mfrow=c(2,2))
+boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical features only")
+stripchart(yhat~y_zhu,pch=20,col="royalblue",cex=.6,vertical=TRUE,add=TRUE)
 yhat1 <- yhat
 
 ######################################################################################################################################
-# 2. build a model based on logistic regression of clin + gene expression features
+# 3. build a model based on logistic regression of clin + gene expression features
 ######################################################################################################################################
 
-# first create datasets combining clin + molecular features in the same matrix 
+# create the training and the validation sets combining clin + molecular features in the same matrix 
 # x to be the training set, z to be the validation set
 
-x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)),as.numeric(as.factor(dir_clin$GENDER)),as.numeric(dir_clin$Age))
-rownames(x)[(length(rownames(x))-2):length(rownames(x))] <- c("P_Stage","GENDER","Age")
+x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)))
+rownames(x)[length(rownames(x))] <- "P_Stage"
 
-z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)),as.numeric(as.factor(zhu_clin$GENDER)),as.numeric(zhu_clin$Age))
-rownames(z)[(length(rownames(z))-2):length(rownames(z))] <- c("P_Stage","GENDER","Age")
+z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)))
+rownames(z)[length(rownames(z))] <- "P_Stage"
 
-fit <- glm(dir_clin$y_dir~.,data=as.data.frame(t(x)),family="binomial")
-
-#predict in zhu
+fit <- glm(dir_clin$y_dir~.+ P_Stage,data=as.data.frame(t(x)),family="binomial")
+summary(fit)
 yhat <- predict(fit,newdata=as.data.frame(t(z)),type="response")
-length(yhat)
 
-par(mfrow=c(1,1))
-boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical + molecular features")
-stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
+
+boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical + molecular features")
+stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,cex=.6,add=TRUE)
 yhat2 <- yhat
 
 #########################################################################################################################################
-# 3. build the model based on molecular features using elasticnet 
+# 4. build the model based on molecular features using elasticnet 
 #  not penalizing the clinical features in a more ridge setting (alpha=.1) 
 #########################################################################################################################################
 
 # let pen be a vector of penalty factors for each coefficient. we want to preserve the pathological stage in the model  
-pen <- c(rep(1,times=length(rownames(dir))),c(0,1,1))
-
+pen <- c(rep(1,times=length(rownames(dir))),0)
 set.seed(1234567)
 cv.fit <- cv.glmnet(x=t(x), y=factor(y_dir), nfolds=10, alpha=.1, family="binomial",penalty.factor=pen)
 plot(cv.fit)
@@ -145,41 +145,63 @@ fit <- glmnet(x=t(x),y=factor(y_dir),family="binomial",alpha=.1,lambda=cv.fit$la
 yhat <- predict(fit,t(z),type="response",s="lambda.min")
 
 
-par(mfrow=c(1,1))
-boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS", main="elastic net")
+
+boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
 yhat3 <- yhat
 
 ######################################################################################################################################
-# 4. build the model based on clin + molecular features using RandomForest
+# 5. build the model based on clin + molecular features using RandomForest
 ######################################################################################################################################
 
 
-setseed(1234567)
-fit <- randomForest(x=t(x),y=factor(y_dir),ntree=80, do.trace=10)
+set.seed(1234567)
+fit <- randomForest(x=t(x),y=factor(y_dir),mtry=12, do.trace=10,ntree=5000, importance=TRUE)
+plot(fit)
+fit
+varImpPlot(fit,sort=TRUE,n.var=15)
 yhat <- predict(fit,t(z),type="prob")
 yhat <- yhat[,2]
-boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main= "Random Forest")
+
+boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main= "Random Forest - molecular + clinical features")
 stripchart(yhat~y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
 yhat4 <- yhat
 
 ######################################################################################################################################
-# plot a ROC curve to asses the performance of our models
+# 6. plot a ROC curve to asses the performance of our models
 ######################################################################################################################################
 
 require(ROCR)
+
+Pred <- prediction(as.numeric(yhat1),as.numeric(y_zhu))
+Perf <- performance(prediction.obj=Pred,"tpr","fpr")
+AUC <- performance(prediction.obj=Pred,"auc")
+plot(Perf, col="royalblue",main="performance of the models",lwd=2)
+text(x=.35,y=.3,labels=paste("AUC logit clin. =",format(x=AUC@y.values,digits=2)),col="royalblue",adj=0,cex=.8)
+
+Pred <- prediction(as.numeric(yhat2),as.numeric(y_zhu))
+Perf <- performance(prediction.obj=Pred,"tpr","fpr")
+AUC <- performance(prediction.obj=Pred,"auc")
+plot(Perf, col="orange",lwd=2,add=TRUE)
+text(x=.35,y=.25,labels=paste("AUC logit clin. & mol. =",format(x=AUC@y.values,digits=2)),col="orange",adj=0,cex=.8)
+
 Pred <- prediction(as.numeric(yhat3),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
 AUC <- performance(prediction.obj=Pred,"auc")
-plot(Perf, col="royalblue",main="performance of our models in Zhu",lwd=2)
-text(x=.5,y=.4,labels=paste("Elastic Net AUC=",format(x=AUC@y.values,digits=2)),col="royalblue",adj=0)
+plot(Perf, col="aquamarine4",lwd=2,add=TRUE)
+text(x=.35,y=.2,labels=paste("AUC Elastic Net=",format(x=AUC@y.values,digits=2)),col="aquamarine4",adj=0,cex=.8)
 
 Pred <- prediction(as.numeric(yhat4),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
 AUC <- performance(prediction.obj=Pred,"auc")
-plot(Perf, col="orange",add=TRUE,lwd=TRUE)
-text(x=.5,y=.3,labels=paste("Random Forest AUC=",format(x=AUC@y.values,digits=2)),col="orange",adj=0)
+plot(Perf, col="red",add=TRUE,lwd=2)
+text(x=.35,y=.15,labels=paste("AUC Random Forest=",format(x=AUC@y.values,digits=2)),col="red",adj=0,cex=.8)
+
+######################################################################################################################################
+# 7. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
+######################################################################################################################################
+
 
 
