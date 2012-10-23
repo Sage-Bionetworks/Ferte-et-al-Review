@@ -109,30 +109,8 @@ boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit 
 stripchart(yhat~y_zhu,pch=20,col="royalblue",cex=.6,vertical=TRUE,add=TRUE)
 yhat1 <- yhat
 
-######################################################################################################################################
-# 3. build a model based on logistic regression of clin + gene expression features
-######################################################################################################################################
-
-# create the training and the validation sets combining clin + molecular features in the same matrix 
-# x to be the training set, z to be the validation set
-
-x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)))
-rownames(x)[length(rownames(x))] <- "P_Stage"
-
-z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)))
-rownames(z)[length(rownames(z))] <- "P_Stage"
-
-fit <- glm(dir_clin$y_dir~.+ P_Stage,data=as.data.frame(t(x)),family="binomial")
-summary(fit)
-yhat <- predict(fit,newdata=as.data.frame(t(z)),type="response")
-
-
-boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical + molecular features")
-stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,cex=.6,add=TRUE)
-yhat2 <- yhat
-
 #########################################################################################################################################
-# 4. build the model based on molecular features using elasticnet 
+# 3. build the model based on molecular features using elasticnet 
 #  not penalizing the clinical features in a more ridge setting (alpha=.1) 
 #########################################################################################################################################
 
@@ -144,15 +122,12 @@ plot(cv.fit)
 fit <- glmnet(x=t(x),y=factor(y_dir),family="binomial",alpha=.1,lambda=cv.fit$lambda.min,penalty.factor=pen)
 yhat <- predict(fit,t(z),type="response",s="lambda.min")
 
-
-
 boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
-
-yhat3 <- yhat
+yhat2 <- yhat
 
 ######################################################################################################################################
-# 5. build the model based on clin + molecular features using RandomForest
+# 4. build the model based on clin + molecular features using RandomForest
 ######################################################################################################################################
 
 
@@ -167,13 +142,14 @@ yhat <- yhat[,2]
 boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main= "Random Forest - molecular + clinical features")
 stripchart(yhat~y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
 
-yhat4 <- yhat
+yhat3 <- yhat
 
 ######################################################################################################################################
-# 6. plot a ROC curve to asses the performance of our models
+# 5. plot a ROC curve to asses the performance of our models
 ######################################################################################################################################
 
 require(ROCR)
+par(mfrow=c(1,1))
 
 Pred <- prediction(as.numeric(yhat1),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
@@ -200,7 +176,7 @@ plot(Perf, col="red",add=TRUE,lwd=2)
 text(x=.35,y=.15,labels=paste("AUC Random Forest=",format(x=AUC@y.values,digits=2)),col="red",adj=0,cex=.8)
 
 ######################################################################################################################################
-# 7. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
+# 6. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
 ######################################################################################################################################
 
 
