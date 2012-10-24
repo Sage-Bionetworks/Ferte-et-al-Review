@@ -31,7 +31,12 @@ mas5DatList <- lapply(mas5EntList, function(x){
   exprs <- exprs(x$objects[[1]])
 })
 
-commonFeatures <- intersectFeatures(mas5DatMatList)
+studyIndicator <- c(rep('zhu', ncol(mas5DatList$zhu)),
+                    rep('hou', ncol(mas5DatList$hou)),
+                    rep('dir', ncol(mas5DatList$dir)),
+                    rep('lusc', ncol(mas5DatList$lusc)))
+
+commonFeatures <- intersectFeatures(mas5DatList)
 
 intMas5DatList <- lapply(mas5DatList, function(x){x[commonFeatures, ]})
 fullMas5Mat <- Reduce(cbind, intMas5DatList)
