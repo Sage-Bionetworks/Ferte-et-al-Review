@@ -12,6 +12,7 @@ require(randomForest)
 require(synapseClient)
 require(caret)
 require(affy)
+require(survival)
 synapseLogin(username="charles.ferte@sagebase.org",password="charles")
 
 
@@ -33,8 +34,13 @@ dir_clin <- loadEntity('syn1438222')
 dir_clin <- dir_clin$objects$DirClinF
 
 # Probability of 3 year overall survival is our dependant variable (vectors of response): y_dir and y_zhu
-zhu_clin$y_zhu <- y_zhu <-  ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
-dir_clin$y_dir <-y_dir <-  ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,0)
+zhu_clin$y_zhu <-  ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,ifelse(zhu_clin$VITAL_STATUS==0,NA,0))
+zhu_clin <- zhu_clin[!is.na(zhu_clin$y_zhu),]
+y_zhu  <- zhu_clin$y_zhu
+
+dir_clin$y_dir <-  ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,ifelse(dir_clin$VITAL_STATUS==0,NA,0))
+dir_clin <- dir_clin[!is.na(dir_clin$y_dir),]
+y_dir <- dir_clin$y_dir
 
 # make data coherent for dir since there are two cel files that are not clinically annotated
 tmp <- intersect(rownames(dir_clin),sampleNames(dir))
@@ -51,7 +57,7 @@ dir <- dir[rownames(zhu),]
 
 #check if there is any latent structure in the data (are the datasets comparable ?)
 s <- svd(cbind(dir,zhu))
-par(mfrow=c(2,2))
+
 plot(s$v[,1],s$v[,2],col=c(rep("royalblue",times=299),rep("orange",times=62)),pch=20,xlab="PC1",ylab="PC2",main="initial datasets",cex=.5)
 
 # quantile normalize zhu to have the same disribution than dir (make them comparable)
@@ -104,9 +110,9 @@ fit <- glm(y_dir ~ P_Stage , data = dir_clin, family = "binomial")
 summary(fit)
 yhat <- predict(fit, zhu_clin, type = "response")
 
-par(mfrow=c(2,2))
 boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main="logit model - clinical features only")
 stripchart(yhat~y_zhu,pch=20,col="royalblue",cex=.6,vertical=TRUE,add=TRUE)
+
 yhat1 <- yhat
 
 #########################################################################################################################################
@@ -114,8 +120,17 @@ yhat1 <- yhat
 #  not penalizing the clinical features in a more ridge setting (alpha=.1) 
 #########################################################################################################################################
 
-# let pen be a vector of penalty factors for each coefficient. we want to preserve the pathological stage in the model  
+# let x and z be the datsets combining molecular features and P Stage
+x <- rbind(dir,as.numeric(as.factor(dir_clin$P_Stage)))
+rownames(x)[length(rownames(x))] <- "P_Stage"
+
+z <- rbind(zhu,as.numeric(as.factor(zhu_clin$P_Stage)))
+rownames(z)[length(rownames(z))] <- "P_Stage"
+
+# let pen be a vector of penalty factors for each coefficient. We want to preserve the pathological stage in the model, so we assign it 0 as penalty factor.
 pen <- c(rep(1,times=length(rownames(dir))),0)
+
+# run the elastic net model
 set.seed(1234567)
 cv.fit <- cv.glmnet(x=t(x), y=factor(y_dir), nfolds=10, alpha=.1, family="binomial",penalty.factor=pen)
 plot(cv.fit)
@@ -124,20 +139,20 @@ yhat <- predict(fit,t(z),type="response",s="lambda.min")
 
 boxplot(yhat~zhu_clin$y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhat~zhu_clin$y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
+
 yhat2 <- yhat
 
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
 ######################################################################################################################################
 
+# let's find the optimal value of mtry
+a <- tuneRF(x=t(x),y=factor(y_dir),stepFactor=1.5,doBest=TRUE,trace=TRUE,ntreeTry=1000)
 
+# run the model with this mtry value
 set.seed(1234567)
-fit <- randomForest(x=t(x),y=factor(y_dir),mtry=12, do.trace=10,ntree=5000, importance=TRUE)
-plot(fit)
-fit
-varImpPlot(fit,sort=TRUE,n.var=15)
-yhat <- predict(fit,t(z),type="prob")
-yhat <- yhat[,2]
+fit <- randomForest(x=t(x),y=factor(y_dir),mtry=a$mtry, do.trace=10,ntree=1000, importance=TRUE)
+yhat <- predict(fit,t(z),type="prob")[,2]
 
 boxplot(yhat~y_zhu,ylab="3-year OS prediction (%)",xlab="3-year OS",main= "Random Forest - molecular + clinical features")
 stripchart(yhat~y_zhu,pch=20,col="royalblue",vertical=TRUE,add=TRUE,cex=.6)
@@ -149,7 +164,6 @@ yhat3 <- yhat
 ######################################################################################################################################
 
 require(ROCR)
-par(mfrow=c(1,1))
 
 Pred <- prediction(as.numeric(yhat1),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
@@ -161,23 +175,29 @@ Pred <- prediction(as.numeric(yhat2),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
 AUC <- performance(prediction.obj=Pred,"auc")
 plot(Perf, col="orange",lwd=2,add=TRUE)
-text(x=.35,y=.25,labels=paste("AUC logit clin. & mol. =",format(x=AUC@y.values,digits=2)),col="orange",adj=0,cex=.8)
+text(x=.35,y=.25,labels=paste("AUC Elastic Net=",format(x=AUC@y.values,digits=2)),col="orange",adj=0,cex=.8)
 
 Pred <- prediction(as.numeric(yhat3),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
 AUC <- performance(prediction.obj=Pred,"auc")
-plot(Perf, col="aquamarine4",lwd=2,add=TRUE)
-text(x=.35,y=.2,labels=paste("AUC Elastic Net=",format(x=AUC@y.values,digits=2)),col="aquamarine4",adj=0,cex=.8)
-
-Pred <- prediction(as.numeric(yhat4),as.numeric(y_zhu))
-Perf <- performance(prediction.obj=Pred,"tpr","fpr")
-AUC <- performance(prediction.obj=Pred,"auc")
 plot(Perf, col="red",add=TRUE,lwd=2)
-text(x=.35,y=.15,labels=paste("AUC Random Forest=",format(x=AUC@y.values,digits=2)),col="red",adj=0,cex=.8)
+text(x=.35,y=.2,labels=paste("AUC Random Forest=",format(x=AUC@y.values,digits=2)),col="red",adj=0,cex=.8)
 
 ######################################################################################################################################
 # 6. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
 ######################################################################################################################################
 
+# for each model, let's assign to "high-risk" the group of patients whose yhat > median(yhat) 
+# and to "low-risk" the group of patients whose yhat<median(yhat). We set high risk =1, low risk =0.
+risk1 <- ifelse(yhat1>=median(yhat1),1,0)
+risk2 <- ifelse(yhat2>=median(yhat2),1,0)
+risk3 <- ifelse(yhat3>=median(yhat3),1,0)
 
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk1,data=zhu_clin))
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk1,data=zhu_clin,rho=0, main="logit model: clinical variables only")
 
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk2,data=zhu_clin))
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk2,data=zhu_clin,rho=0,main="elastic net model: clinical + molecular features")
+
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk3,data=zhu_clin), main="random forest model: clinical + molecular features")
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk3,data=zhu_clin,rho=0)
