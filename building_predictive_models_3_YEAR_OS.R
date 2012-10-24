@@ -13,8 +13,9 @@ require(synapseClient)
 require(caret)
 require(affy)
 require(survival)
+require(ROCR)
 synapseLogin(username="charles.ferte@sagebase.org",password="charles")
-
+set.seed(101101)
 
 ######################################################################################################################################
 # 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
@@ -133,7 +134,7 @@ rownames(z)[length(rownames(z))] <- "P_Stage"
 pen <- c(rep(1,times=length(rownames(dir))),0)
 
 # run the elastic net model
-set.seed(1234567)
+
 cv.fit <- cv.glmnet(x=t(x), y=factor(y_dir), nfolds=10, alpha=.1, family="binomial",penalty.factor=pen)
 plot(cv.fit)
 fit <- glmnet(x=t(x),y=factor(y_dir),family="binomial",alpha=.1,lambda=cv.fit$lambda.min,penalty.factor=pen)
@@ -152,7 +153,6 @@ yhat2 <- yhat
 a <- tuneRF(x=t(x),y=factor(y_dir),stepFactor=1.5,doBest=TRUE,trace=TRUE,ntreeTry=1000)
 
 # run the model with this mtry value
-set.seed(1234567)
 fit <- randomForest(x=t(x),y=factor(y_dir),mtry=a$mtry, do.trace=10,ntree=1000, importance=TRUE)
 yhat <- predict(fit,t(z),type="prob")[,2]
 
@@ -164,8 +164,6 @@ yhat3 <- yhat
 ######################################################################################################################################
 # 5. plot a ROC curve to asses the performance of our models
 ######################################################################################################################################
-
-require(ROCR)
 
 Pred <- prediction(as.numeric(yhat1),as.numeric(y_zhu))
 Perf <- performance(prediction.obj=Pred,"tpr","fpr")
@@ -203,3 +201,5 @@ survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~ri
 
 plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk3,data=zhu_clin), main="random forest model: clinical + molecular features")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk3,data=zhu_clin,rho=0)
+
+
