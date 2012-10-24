@@ -53,9 +53,6 @@ zhu_clin <- zhu_clin[tmp,]
 zhu <- exprs(zhu)[,tmp]
 rm(tmp)
 
-# transform zhu eset in matrix
-zhu <- exprs(zhu)
-
 # get rid of the junk features
 zhu <- zhu[-c(grep("AFFX",rownames(zhu))),]
 dir <- dir[rownames(zhu),]
@@ -198,11 +195,11 @@ risk1 <- ifelse(yhat1>=median(yhat1),1,0)
 risk2 <- ifelse(yhat2>=median(yhat2),1,0)
 risk3 <- ifelse(yhat3>=median(yhat3),1,0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk1,data=zhu_clin))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk1,data=zhu_clin,rho=0, main="logit model: clinical variables only")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk1,data=zhu_clin), main="logit model: clinical variables only")
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk1,data=zhu_clin,rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk2,data=zhu_clin))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk2,data=zhu_clin,rho=0,main="elastic net model: clinical + molecular features")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk2,data=zhu_clin),main="elastic net model: clinical + molecular features")
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk2,data=zhu_clin,rho=0)
 
 plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk3,data=zhu_clin), main="random forest model: clinical + molecular features")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS)~risk3,data=zhu_clin,rho=0)

@@ -142,6 +142,7 @@ assign(tmp1,barcode(get(tmp)))
 
 # push the raw data into this entity
 #dir_frma <- storeEntity(entity=dir_frma)
+
 #############################################################################################
 
 #dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
