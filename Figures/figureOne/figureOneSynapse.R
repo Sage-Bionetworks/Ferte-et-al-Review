@@ -50,4 +50,10 @@ figOnePanelFiveEnt <- createEntity(figOnePanelFiveEnt)
 figOnePanelFiveEnt <- addObject(figOnePanelFiveEnt, dchipPcPlot)
 figOnePanelFiveEnt <- storeEntity(figOnePanelFiveEnt)
 
+## FIGURE ONE PANEL SIX
+figOnePanelSixEnt <- Data(list(name = 'figureOnePanelSixBinary',
+                               parentId = 'syn1446518'))
+figOnePanelSixEnt <- createEntity(figOnePanelSixEnt)
+figOnePanelSixEnt <- addObject(figOnePanelSixEnt, frmaPcPlot)
+figOnePanelSixEnt <- storeEntity(figOnePanelSixEnt)
 
