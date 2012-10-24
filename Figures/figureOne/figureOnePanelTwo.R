@@ -12,6 +12,9 @@ require(snm)
 require(ggplot2)
 require(synapseClient)
 
+figFuncEnt <- loadEntity('syn1446521')
+attach(figFuncEnt)
+
 ## SECOND, PLOTTING MAS5 NORMALIZED DATA
 ## PULL IN MAS5 DATA FROM SYNAPSE
 zhuMas5Ent <- loadEntity('syn1437053')
@@ -28,7 +31,9 @@ mas5DatList <- lapply(mas5EntList, function(x){
   exprs <- exprs(x$objects[[1]])
 })
 
-intMas5DatList <- lapply(mas5DatList, function(x){x[intersectFeatures, ]})
+commonFeatures <- intersectFeatures(mas5DatMatList)
+
+intMas5DatList <- lapply(mas5DatList, function(x){x[commonFeatures, ]})
 fullMas5Mat <- Reduce(cbind, intMas5DatList)
 
 mas5PcPlot <- generatePcPlot(fullMas5Mat) +

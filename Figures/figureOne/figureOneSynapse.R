@@ -8,6 +8,13 @@
 require(synapseClient)
 ## synapseLogin()
 
+## FIGURE HELPER FUNCTIONS
+figFunctionsEnt <- Code(list(name = 'figureFunctions.R',
+                        parentId = 'syn87682'))
+figFunctionsEnt <- createEntity(figFunctionsEnt)
+figFunctionsEnt <- addFile(figFunctionsEnt, 'figureFunctions.R')
+figFunctionsEnt <- storeEntity(figFunctionsEnt)
+
 ## FIGURE ONE PANEL ONE
 figOnePanelOneEnt <- Data(list(name = 'figureOnePanelOneBinary',
                                parentId = 'syn1446518'))

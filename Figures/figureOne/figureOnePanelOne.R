@@ -16,6 +16,8 @@ require(snm)
 require(ggplot2)
 require(synapseClient)
 
+figFuncEnt <- loadEntity('syn1446521')
+attach(figFuncEnt)
 
 ## PULL IN THE RAW DATA FROM SYNAPSE
 zhuRawEnt <- loadEntity('syn1439020')

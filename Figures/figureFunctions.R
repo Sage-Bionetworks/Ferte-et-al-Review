@@ -7,19 +7,10 @@
 
 ## R functions for generating figures.
 
-## REQUIRED LIBRARIES
-require(Biobase)
-require(affy)
-require(snm)
-require(ggplot2)
-require(synapseClient)
-
-## synapseLogin()
-
-
 ## DEFINE FUNCTIONS
 ## DEFINE getCelNames() FUNCTION
 getCelNames <- function(x){
+  require(affy)
   fileNames <- list.celfiles(path = x$cacheDir, full.names = TRUE)
 }
 
@@ -27,6 +18,7 @@ getCelNames <- function(x){
 # Merely using the rma() function to extract summarized but not normalized or
 # background-adjusted expression data
 getRawDat <- function(x){
+  require(affy)
   affyBatchObj <- ReadAffy(filenames = x)
   rawDat <- rma(affyBatchObj, normalize = FALSE, background = FALSE)
 }
@@ -36,6 +28,7 @@ getRawDat <- function(x){
 # and plot it using ggplot
 generatePcPlot <- function(fullMatrix){
   require(ggplot2)
+  require(corpcor)
   ## Make a ggplot-friendly dataframe from the singular value decomposition
   svdObj <- fast.svd(fullMatrix)
   pcDF <- data.frame(svdObj$v[ , 1:2])
