@@ -48,6 +48,11 @@ dir_clin <- dir_clin[tmp,]
 dir <- exprs(dir)[,tmp]
 rm(tmp)
 
+tmp <- intersect(rownames(zhu_clin),sampleNames(zhu))
+zhu_clin <- zhu_clin[tmp,]
+zhu <- exprs(zhu)[,tmp]
+rm(tmp)
+
 # transform zhu eset in matrix
 zhu <- exprs(zhu)
 
