@@ -17,7 +17,8 @@ library(hgu133afrmavecs)
 library(hthgu133afrmavecs)
 library(snm)
 require(synapseClient)
-synapseLogin(username="charles.ferte@sagebase.org",password="charles")
+
+synapseLogin()
 
 ###################################################################################
 # select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
@@ -86,66 +87,69 @@ assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
 # save the data in Synapse
-###################################################################################
-require(synapseClient)
-synapseLogin(username="charles.ferte@sagebase.org",password="charles")
 #
-dir_rma <- Data(list(name = "dir rma", parentId = 'syn87682'))
-dir_rma <- createEntity(dir_rma)
+# Saving steps for initial entities back to Synapse.  
+#The ids will be accessible in the remainder of the code.
+###################################################################################
+#require(synapseClient)
+#synapseLogin()
+#
+#dir_rma <- Data(list(name = "dir rma", parentId = 'syn87682'))
+#dir_rma <- createEntity(dir_rma)
 
 # add object into the data entity
-dir_rma <- addObject(dir_rma,Dir_rma)
+#dir_rma <- addObject(dir_rma,Dir_rma)
 
 # push the raw data into this entity
-dir_rma <- storeEntity(entity=dir_rma)
+#dir_rma <- storeEntity(entity=dir_rma)
 
 #############################################################################################
-dir_gcrma <- Data(list(name = "dir gcrma", parentId = 'syn87682'))
-dir_gcrma <- createEntity(dir_gcrma)
+#dir_gcrma <- Data(list(name = "dir gcrma", parentId = 'syn87682'))
+#dir_gcrma <- createEntity(dir_gcrma)
 
 # add object into the data entity
-dir_gcrma <- addObject(dir_gcrma,Dir_gcrma)
+#dir_gcrma <- addObject(dir_gcrma,Dir_gcrma)
 
 # push the raw data into this entity
-dir_gcrma <- storeEntity(entity=dir_gcrma)
+#dir_gcrma <- storeEntity(entity=dir_gcrma)
 #############################################################################################
 
 
-dir_MAS5 <- Data(list(name = "dir MAS5", parentId = 'syn87682'))
-dir_MAS5 <- createEntity(dir_MAS5)
+#dir_MAS5 <- Data(list(name = "dir MAS5", parentId = 'syn87682'))
+#dir_MAS5 <- createEntity(dir_MAS5)
 
 # add object into the data entity
-dir_MAS5 <- addObject(dir_MAS5,Dir_MAS5)
+#dir_MAS5 <- addObject(dir_MAS5,Dir_MAS5)
 
 # push the raw data into this entity
-dir_MAS5 <- storeEntity(entity=dir_MAS5)
+#dir_MAS5 <- storeEntity(entity=dir_MAS5)
 #############################################################################################
-dir_dCHIP <- Data(list(name = "dir dCHIP", parentId = 'syn87682'))
-dir_dCHIP <- createEntity(dir_dCHIP)
+#dir_dCHIP <- Data(list(name = "dir dCHIP", parentId = 'syn87682'))
+#dir_dCHIP <- createEntity(dir_dCHIP)
 
 # add object into the data entity
-dir_dCHIP <- addObject(dir_dCHIP,Dir_dCHIP)
+#dir_dCHIP <- addObject(dir_dCHIP,Dir_dCHIP)
 
 # push the raw data into this entity
-dir_dCHIP <- storeEntity(entity=dir_dCHIP)
-#############################################################################################
-
-dir_frma <- Data(list(name = "dir frma", parentId = 'syn87682'))
-dir_frma <- createEntity(dir_frma)
-
-# add object into the data entity
-dir_frma <- addObject(dir_frma,Dir_frma)
-
-# push the raw data into this entity
-dir_frma <- storeEntity(entity=dir_frma)
+#dir_dCHIP <- storeEntity(entity=dir_dCHIP)
 #############################################################################################
 
-dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
-dir_barcode <- createEntity(dir_barcode)
+#dir_frma <- Data(list(name = "dir frma", parentId = 'syn87682'))
+#dir_frma <- createEntity(dir_frma)
 
 # add object into the data entity
-dir_barcode <- addObject(dir_barcode,Dir_barcode)
+#dir_frma <- addObject(dir_frma,Dir_frma)
 
 # push the raw data into this entity
-dir_barcode <- storeEntity(entity=dir_barcode)
+#dir_frma <- storeEntity(entity=dir_frma)
+#############################################################################################
+
+#dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
+#dir_barcode <- createEntity(dir_barcode)
+
+# add object into the data entity
+#dir_barcode <- addObject(dir_barcode,Dir_barcode)
+
+# push the raw data into this entity
+#dir_barcode <- storeEntity(entity=dir_barcode)
 #
