@@ -19,7 +19,7 @@ attach(figFuncEnt)
 zhuFrmaEnt <- loadEntity('syn1437066')
 houFrmaEnt <- loadEntity('syn1437182')
 dirFrmaEnt <- loadEntity('syn1437194')
-luscFrmaEnt <- loadEntity('syn1437182')
+luscFrmaEnt <- loadEntity('syn1437213')
 
 frmaEntList <- list('zhu' = zhuFrmaEnt,
                      'hou' = houFrmaEnt,
