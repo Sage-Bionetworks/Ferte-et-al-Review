@@ -15,6 +15,7 @@ require(affy)
 require(survival)
 require(ROCR)
 require(pls)
+require(gplots)
 set.seed(12221981)
 ######################################################################################################################################
 # 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
@@ -119,10 +120,10 @@ stripchart(yhatEnet ~ zhu_clin$y_zhu,pch=20, col="royalblue", vertical=TRUE, add
 ######################################################################################################################################
 
 # let's find the optimal value of mtry
-a <- tuneRF(x=t(x), y=factor(dir_clin$y_dir), stepFactor=1.5, doBest=TRUE, trace=TRUE, ntreeTry=1000)
+a <- tuneRF(x=t(x), y=factor(dir_clin$y_dir), stepFactor=1.5, doBest=TRUE, trace=TRUE, ntreeTry=1000,type="regression")
 
 # run the model with this mtry value
-fitRF <- randomForest(x=t(x), y=factor(dir_clin$y_dir), mtry=a$mtry, do.trace=10, ntree=1000, importance=TRUE)
+fitRF <- randomForest(x=t(x), y=factor(dir_clin$y_dir), mtry=a$mtry, do.trace=10, ntree=1000, importance=TRUE,type="regression")
 yhatRF <- predict(fitRF, t(z), type="prob")[,2]
 
 boxplot(yhatRF ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Random Forest - molecular + clinical features")
@@ -184,45 +185,59 @@ text(x=.25, y=.05, labels=paste("AUC Partial least square=", format(x=AUC@y.valu
 
 
 ######################################################################################################################################
-# 7. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
+# 8. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
 ######################################################################################################################################
 
 # for each model, let's assign to "high-risk" the group of patients whose yhat > median(yhat) 
 # and to "low-risk" the group of patients whose yhat<median(yhat). We set high risk =1, low risk =0.
 
 riskClin <- ifelse(yhatClin >= median(yhatClin), 1, 0)
-names(riskClin) <- names(yhatClin)
-riskEnet <- ifelse(yhatEnet >= median(yhatEnet), 1, 0)
-names(riskEnet) <- names(yhatEnet)
+riskEnet <- as.vector(ifelse(yhatEnet >= median(yhatEnet), 1, 0))
+names(riskEnet) <- rownames(yhatEnet)
 riskRF <- ifelse(yhatRF >= median(yhatRF), 1, 0)
-riskPcr <- ifelse(yhatPcr >= median(yhatPcr), 1, 0)
-riskPls <- ifelse(yhatPls >= median(yhatPls), 1, 0)
-
+riskPcr <- as.vector(ifelse(yhatPcr >= median(yhatPcr), 1, 0))
+names(riskPcr) <- rownames(yhatPcr)
+riskPls <- as.vector(ifelse(yhatPls >= median(yhatPls), 1, 0))
+names(riskPls) <- rownames(yhatPls)
 # for each model, draw the kaplan meir curves and compute the log rank test
+par(mfrow=c(1,1))
 
-par(mfrow=c(2,3))
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of 3 years OS")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin, rho=0)
+abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of 3 years OS")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet, rho=0)
+abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of 3 years OS")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF, rho=0)
+abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of 3 years OS")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr, rho=0)
+abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of 3 years OS")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls, rho=0)
-
+abline(v=36,col="red",lty=2)
 
 ######################################################################################################################################
-# 7. draw the heatmaps based on the predictors (high and low risk groups based on the median)
+# 9. draw the heatmaps based on the predictors (high and low risk groups based on the median)
 ######################################################################################################################################
-require(gplots)
-sort(riskEnet)
-orderCol <- rownames(riskEnet)[sort(riskEnet,index.return=T)$ix]
-heatmap.2(x=z[which(abs(fitEnet$beta)>0),orderCol],trace="none",ColSideColors=c("blue","red")[riskEnet[orderCol]+1],col=greenred(100),Colv=FALSE)
-          
-dim(x[which(abs(fitEnet$beta)>0),])
+par(oma=c(4,2,4,4))
+
+riskEnet1 <- sort(riskEnet)
+heatmap.2(x=z[which(abs(fitEnet$beta)>0),names(riskEnet1)],trace="none",ColSideColors=c("blue","magenta")[riskEnet1+1],col=greenred(50),scale="none",Colv=FALSE, main="Elastic Net")
+
+riskRF1 <- sort(riskRF)
+heatmap.2(x=z[which(abs(importance(fitRF,type=1))>.18),names(riskRF1)],trace="none",ColSideColors=c("blue","magenta")[riskRF1+1],col=greenred(50),scale="none",Colv=FALSE, main="Random Forest")
+
+riskPcr1 <- sort(riskPcr)
+features_Pcr <- sort(abs(fitPcr$coefficients[,,1]),index.return=TRUE,decreasing=TRUE)$ix[1:100]
+heatmap.2(x=z[features_Pcr,names(riskPcr1)],trace="none",ColSideColors=c("blue","magenta")[riskPcr1+1],col=greenred(50),scale="none",Colv=FALSE, main="Princ. Comp. Regression")
+
+riskPls1 <- sort(riskPls)
+features_Pls <- sort(abs(fitPls$coefficients[,,1]),index.return=TRUE,decreasing=TRUE)$ix[1:100]
+heatmap.2(x=z[features_Pls,names(riskPls1)],trace="none",ColSideColors=c("blue","magenta")[riskPls1+1],col=greenred(50),scale="none",Colv=FALSE, main="Partial Least Square")
+
