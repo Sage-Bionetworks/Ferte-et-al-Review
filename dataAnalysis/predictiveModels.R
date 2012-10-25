@@ -150,7 +150,7 @@ boxplot(yhatPls ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year 
 stripchart(yhatPls ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ######################################################################################################################################
-# 7. plot ROC curvew to asses the performance of our models using pROC (more convenient than ROCR)
+# 7. plot ROC curves to asses the performance of our models using pROC package
 ######################################################################################################################################
 
 rocClin <- roc(predictor=as.numeric(yhatClin),response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
@@ -174,11 +174,11 @@ txtPls <- paste("AUC Partial Least Square =",format(x=rocPls$auc, digits=2),", 9
 
 title(main="performance of the models 
 predicting the probability of 3 years OS",outer=TRUE)
-text(x=.5, y=.25, labels=paste(txtClin), col="royalblue", adj=0, cex=.9)
-text(x=.5, y=.2, labels=paste(txtEnet), col="red", adj=0, cex=.9)
-text(x=.5, y=.15, labels=paste(txtRF), col="orange", adj=0, cex=.9)
-text(x=.5, y=.1, labels=paste(txtPcr), col="darkgreen", adj=0, cex=.9)
-text(x=.5, y=.05, labels=paste(txtPls), col="black", adj=0, cex=.9)
+text(x=.65, y=.25, labels=paste(txtClin), col="royalblue", adj=0)
+text(x=.65, y=.2, labels=paste(txtEnet), col="red", adj=0)
+text(x=.65, y=.15, labels=paste(txtRF), col="orange", adj=0)
+text(x=.65, y=.1, labels=paste(txtPcr), col="darkgreen", adj=0)
+text(x=.65, y=.05, labels=paste(txtPls), col="black", adj=0)
 
 ######################################################################################################################################
 # 8. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
