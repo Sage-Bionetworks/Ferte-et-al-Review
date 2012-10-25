@@ -58,7 +58,7 @@ zhu <- normalize2Reference(zhu, rowMeans(dir))
 prob.var1  <- apply(zhu, 1, var)
 prob.var2 <- apply(dir, 1, var)
 mean.prob.var <- apply(cbind(prob.var1, prob.var2), 1, mean)
-tmp <- which(mean.prob.var > quantile(mean.prob.var, probs=.9))
+tmp <- which(mean.prob.var > quantile(mean.prob.var, probs=.8))
 dir <- dir[tmp, ]
 zhu <- zhu[tmp, ]
 rm(tmp, mean.prob.var, prob.var1, prob.var2)
@@ -132,8 +132,8 @@ stripchart(yhatRF ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=
 # 5. principal component regression
 ##############################################################################################################
 
-fitPcr <- pcr(dir_clin$y_dir ~ t(x), ncomp=6,validation = "CV", family="binomial")
-yhatPcr <- predict(fitPcr, comps = 1:5,t(z), type="response")
+fitPcr <- pcr(dir_clin$y_dir ~ t(x), ncomp=10,validation = "CV", family="binomial")
+yhatPcr <- predict(fitPcr, comps = 1:9,t(z), type="response")
 
 boxplot(yhatPcr ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
 stripchart(yhatPcr ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
@@ -141,8 +141,8 @@ stripchart(yhatPcr ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add
 ###################################################################################################################
 # 6. partial leased square
 ##############################################################################################################
-fitPls <- plsr(dir_clin$y_dir ~ t(x), ncomp=6,validation = "CV", family="binomial")
-yhatPls <- predict(fitPls, comps = 1:5,t(z), type="response")
+fitPls <- plsr(dir_clin$y_dir ~ t(x), ncomp=10,validation = "CV", family="binomial")
+yhatPls <- predict(fitPls, comps = 1:9,t(z), type="response")
 
 boxplot(yhatPls ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
 stripchart(yhatPls ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
@@ -154,7 +154,8 @@ stripchart(yhatPls ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add
 Pred <- prediction(as.numeric(yhatClin), as.numeric(zhu_clin$y_zhu))
 Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
 AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="royalblue", main="performance of the models predicting 3 year OS", lwd=2)
+plot(Perf, col="royalblue", main="performance of the models 
+predicting the probability of 3 years OS", lwd=2)
 text(x=.25, y=.25, labels=paste("AUC logit clin. =", format(x=AUC@y.values, digits=2)), col="royalblue", adj=0, cex=.8)
 
 Pred <- prediction(as.numeric(yhatEnet), as.numeric(zhu_clin$y_zhu))
@@ -191,19 +192,21 @@ text(x=.25, y=.05, labels=paste("AUC Partial least square=", format(x=AUC@y.valu
 riskClin <- ifelse(yhatClin >= median(yhatClin), 1, 0)
 riskEnet <- ifelse(yhatEnet >= median(yhatEnet), 1, 0)
 riskRF <- ifelse(yhatRF >= median(yhatRF), 1, 0)
-riskPcr <- ifelse(yhatPcr >= median(yhatRF), 1, 0)
+riskPcr <- ifelse(yhatPcr >= median(yhatPcr), 1, 0)
+riskPls <- ifelse(yhatPls >= median(yhatPls), 1, 0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model: clinical variables only")
+par(mfrow=c(2,3))
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model: clinical + molecular features")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model: clinical + molecular features")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="random forest model: clinical + molecular features")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr, rho=0)
 
-
-
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls), main="Partial least square model")
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls, rho=0)
