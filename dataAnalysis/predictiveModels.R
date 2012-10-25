@@ -189,24 +189,40 @@ text(x=.25, y=.05, labels=paste("AUC Partial least square=", format(x=AUC@y.valu
 
 # for each model, let's assign to "high-risk" the group of patients whose yhat > median(yhat) 
 # and to "low-risk" the group of patients whose yhat<median(yhat). We set high risk =1, low risk =0.
+
 riskClin <- ifelse(yhatClin >= median(yhatClin), 1, 0)
+names(riskClin) <- names(yhatClin)
 riskEnet <- ifelse(yhatEnet >= median(yhatEnet), 1, 0)
+names(riskEnet) <- names(yhatEnet)
 riskRF <- ifelse(yhatRF >= median(yhatRF), 1, 0)
 riskPcr <- ifelse(yhatPcr >= median(yhatPcr), 1, 0)
 riskPls <- ifelse(yhatPls >= median(yhatPls), 1, 0)
 
+# for each model, draw the kaplan meir curves and compute the log rank test
+
 par(mfrow=c(2,3))
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of 3 years OS")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of 3 years OS")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of 3 years OS")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of 3 years OS")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr, rho=0)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls), main="Partial least square model")
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of 3 years OS")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls, rho=0)
+
+
+######################################################################################################################################
+# 7. draw the heatmaps based on the predictors (high and low risk groups based on the median)
+######################################################################################################################################
+require(gplots)
+sort(riskEnet)
+orderCol <- rownames(riskEnet)[sort(riskEnet,index.return=T)$ix]
+heatmap.2(x=z[which(abs(fitEnet$beta)>0),orderCol],trace="none",ColSideColors=c("blue","red")[riskEnet[orderCol]+1],col=greenred(100),Colv=FALSE)
+          
+dim(x[which(abs(fitEnet$beta)>0),])
