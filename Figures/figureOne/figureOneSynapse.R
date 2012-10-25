@@ -57,3 +57,9 @@ figOnePanelSixEnt <- createEntity(figOnePanelSixEnt)
 figOnePanelSixEnt <- addObject(figOnePanelSixEnt, frmaPcPlot)
 figOnePanelSixEnt <- storeEntity(figOnePanelSixEnt)
 
+## FIGURE ONE PANELS HGU133A
+figOnePanelHgu133a <- Data(list(name = 'figureOneHgu133aPanels',
+                                parentId = 'syn1446518'))
+figOnePanelHgu133a <- createEntity(figOnePanelHgu133a)
+figOnePanelHgu133a <- addObject(figOnePanelHgu133a, figureOneHgu133aPanelList)
+figOnePanelHgu133a <- storeEntity(figOnePanelHgu133a)
