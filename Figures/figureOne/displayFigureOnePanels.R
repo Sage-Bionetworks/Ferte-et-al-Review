@@ -29,7 +29,7 @@ figOneObjList$figureOnePanelFourBinary
 figOneObjList$figureOnePanelFiveBinary
 figOneObjList$figureOnePanelSixBinary
 
-multiplot(figOneObjList, cols = 3)
+multiplot(figOneObjList[1:5], cols = 3)
 
 
 
