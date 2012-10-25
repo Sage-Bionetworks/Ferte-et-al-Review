@@ -72,3 +72,12 @@ frmaDat <- cbind(frmaDat[ , dirSamps], frmaDat[ , zhuSamps])
 
 hgu133aFrmaPcPlot <- generatePcPlot(frmaDat) +
   opts(title = 'fRMA Normalized by Prin. Comp.\n')
+
+## Combine objects into list
+figureOneHgu133aPanelList <- list('rma' = hgu133aRmaPcPlot,
+                                  'gcrma' = hgu133aGcrmaPcPlot,
+                                  'mas5' = hgu133aMas5PcPlot,
+                                  'dchip' = hgu133aDchipPcPlot,
+                                  'barcode' = hgu133aBarPcPlot,
+                                  'frma' = hgu133aFrmaPcPlot,
+                                  'studyInd' = studyIndicator)
