@@ -14,7 +14,7 @@ require(caret)
 require(affy)
 require(survival)
 require(ROCR)
-
+require(pls)
 set.seed(12221981)
 ######################################################################################################################################
 # 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
@@ -64,7 +64,7 @@ zhu <- zhu[tmp, ]
 rm(tmp, mean.prob.var, prob.var1, prob.var2)
 
 # make the two datasets have the same mean and variance
-# Justin's function to rescale the validation data to get the same mean/var than the training set
+# Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
 normalize_to_X <- function(mean.x, sd.x, Y){
   m.y <- rowMeans(Y)
   sd.y <- apply(Y, 1, sd)
@@ -128,30 +128,62 @@ yhatRF <- predict(fitRF, t(z), type="prob")[,2]
 boxplot(yhatRF ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Random Forest - molecular + clinical features")
 stripchart(yhatRF ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
+###################################################################################################################
+# 5. principal component regression
+##############################################################################################################
+
+fitPcr <- pcr(dir_clin$y_dir ~ t(x), ncomp=6,validation = "CV", family="binomial")
+yhatPcr <- predict(fitPcr, comps = 1:5,t(z), type="response")
+
+boxplot(yhatPcr ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
+stripchart(yhatPcr ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+
+###################################################################################################################
+# 6. partial leased square
+##############################################################################################################
+fitPls <- plsr(dir_clin$y_dir ~ t(x), ncomp=6,validation = "CV", family="binomial")
+yhatPls <- predict(fitPls, comps = 1:5,t(z), type="response")
+
+boxplot(yhatPls ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
+stripchart(yhatPls ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+
 ######################################################################################################################################
-# 5. plot a ROC curve to asses the performance of our models
+# 7. plot a ROC curve to asses the performance of our models
 ######################################################################################################################################
 
 Pred <- prediction(as.numeric(yhatClin), as.numeric(zhu_clin$y_zhu))
 Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
 AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="royalblue", main="performance of the models", lwd=2)
-text(x=.35, y=.3, labels=paste("AUC logit clin. =", format(x=AUC@y.values, digits=2)), col="royalblue", adj=0, cex=.8)
+plot(Perf, col="royalblue", main="performance of the models predicting 3 year OS", lwd=2)
+text(x=.25, y=.25, labels=paste("AUC logit clin. =", format(x=AUC@y.values, digits=2)), col="royalblue", adj=0, cex=.8)
 
 Pred <- prediction(as.numeric(yhatEnet), as.numeric(zhu_clin$y_zhu))
 Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
 AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="orange", lwd=2, add=TRUE)
-text(x=.35, y=.25, labels=paste("AUC Elastic Net=", format(x=AUC@y.values, digits=2)), col="orange", adj=0, cex=.8)
+plot(Perf, col="red", lwd=2, add=TRUE)
+text(x=.25, y=.2, labels=paste("AUC Elastic Net=", format(x=AUC@y.values, digits=2)), col="red", adj=0, cex=.8)
 
 Pred <- prediction(as.numeric(yhatRF), as.numeric(zhu_clin$y_zhu))
 Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
 AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="red", add=TRUE, lwd=2)
-text(x=.35, y=.2, labels=paste("AUC Random Forest=", format(x=AUC@y.values, digits=2)), col="red", adj=0, cex=.8)
+plot(Perf, col="orange", add=TRUE, lwd=2)
+text(x=.25, y=.15, labels=paste("AUC Random Forest=", format(x=AUC@y.values, digits=2)), col="orange", adj=0, cex=.8)
+
+Pred <- prediction(as.numeric(yhatPcr), as.numeric(zhu_clin$y_zhu))
+Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
+AUC <- performance(prediction.obj=Pred, "auc")
+plot(Perf, col="darkgreen", add=TRUE, lwd=2)
+text(x=.25, y=.1, labels=paste("AUC Principal Comp. regression=", format(x=AUC@y.values, digits=2)), col="darkgreen", adj=0, cex=.8)
+
+Pred <- prediction(as.numeric(yhatPls), as.numeric(zhu_clin$y_zhu))
+Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
+AUC <- performance(prediction.obj=Pred, "auc")
+plot(Perf, col="black", add=TRUE, lwd=2)
+text(x=.25, y=.05, labels=paste("AUC Partial least square=", format(x=AUC@y.values, digits=2)), col="black", adj=0, cex=.8)
+
 
 ######################################################################################################################################
-# 6. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
+# 7. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
 ######################################################################################################################################
 
 # for each model, let's assign to "high-risk" the group of patients whose yhat > median(yhat) 
@@ -159,6 +191,7 @@ text(x=.35, y=.2, labels=paste("AUC Random Forest=", format(x=AUC@y.values, digi
 riskClin <- ifelse(yhatClin >= median(yhatClin), 1, 0)
 riskEnet <- ifelse(yhatEnet >= median(yhatEnet), 1, 0)
 riskRF <- ifelse(yhatRF >= median(yhatRF), 1, 0)
+riskPcr <- ifelse(yhatPcr >= median(yhatRF), 1, 0)
 
 plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model: clinical variables only")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin, rho=0)
@@ -168,5 +201,9 @@ survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ 
 
 plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model: clinical + molecular features")
 survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF, rho=0)
+
+plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="random forest model: clinical + molecular features")
+survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr, rho=0)
+
 
 
