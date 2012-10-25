@@ -14,6 +14,7 @@ require(caret)
 require(affy)
 require(survival)
 require(ROCR)
+require(pROC)
 require(pls)
 require(gplots)
 set.seed(12221981)
@@ -149,40 +150,35 @@ boxplot(yhatPls ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year 
 stripchart(yhatPls ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ######################################################################################################################################
-# 7. plot a ROC curve to asses the performance of our models
+# 7. plot ROC curvew to asses the performance of our models using pROC (more convenient than ROCR)
 ######################################################################################################################################
 
-Pred <- prediction(as.numeric(yhatClin), as.numeric(zhu_clin$y_zhu))
-Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
-AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="royalblue", main="performance of the models 
-predicting the probability of 3 years OS", lwd=2)
-text(x=.25, y=.25, labels=paste("AUC logit clin. =", format(x=AUC@y.values, digits=2)), col="royalblue", adj=0, cex=.8)
+rocClin <- roc(predictor=as.numeric(yhatClin),response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
+rocEnet <- roc(predictor=as.numeric(yhatEnet), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
+rocRF <- roc(predictor=as.numeric(yhatRF), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
+rocPcr <- roc(predictor=as.numeric(yhatPcr), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
+rocPls <- roc(predictor=as.numeric(yhatPls), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
 
-Pred <- prediction(as.numeric(yhatEnet), as.numeric(zhu_clin$y_zhu))
-Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
-AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="red", lwd=2, add=TRUE)
-text(x=.25, y=.2, labels=paste("AUC Elastic Net=", format(x=AUC@y.values, digits=2)), col="red", adj=0, cex=.8)
+plot.roc(rocClin,col="royalblue")
+plot.roc(rocEnet,add=TRUE,col="red")
+plot.roc(rocRF,add=TRUE,col="orange")
+plot.roc(rocPcr,add=TRUE,col="darkgreen")
+plot.roc(rocPls,add=TRUE,col="black")
 
-Pred <- prediction(as.numeric(yhatRF), as.numeric(zhu_clin$y_zhu))
-Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
-AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="orange", add=TRUE, lwd=2)
-text(x=.25, y=.15, labels=paste("AUC Random Forest=", format(x=AUC@y.values, digits=2)), col="orange", adj=0, cex=.8)
+#concatenate AUC + 95CI 
+txtClin <- paste("AUC logit clin. =",format(x=rocClin$auc, digits=2),", 95% CI:",format(x=as.numeric(rocClin$ci)[1],digits=2),"-",format(x=as.numeric(rocClin$ci)[3],digits=2))
+txtEnet <- paste("AUC Elastic Net =",format(x=rocEnet$auc, digits=2),", 95% CI:",format(x=as.numeric(rocEnet$ci)[1],digits=2),"-",format(x=as.numeric(rocEnet$ci)[3],digits=2))
+txtRF <- paste("AUC Random Forest =",format(x=rocRF$auc, digits=2),", 95% CI:",format(x=as.numeric(rocRF$ci)[1],digits=2),"-",format(x=as.numeric(rocRF$ci)[3],digits=2))
+txtPcr <- paste("AUC Princ. Comp. Reg. =",format(x=rocPcr$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPcr$ci)[1],digits=2),"-",format(x=as.numeric(rocPcr$ci)[3],digits=2))
+txtPls <- paste("AUC Partial Least Square =",format(x=rocPls$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPls$ci)[1],digits=2),"-",format(x=as.numeric(rocPls$ci)[3],digits=2))
 
-Pred <- prediction(as.numeric(yhatPcr), as.numeric(zhu_clin$y_zhu))
-Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
-AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="darkgreen", add=TRUE, lwd=2)
-text(x=.25, y=.1, labels=paste("AUC Principal Comp. regression=", format(x=AUC@y.values, digits=2)), col="darkgreen", adj=0, cex=.8)
-
-Pred <- prediction(as.numeric(yhatPls), as.numeric(zhu_clin$y_zhu))
-Perf <- performance(prediction.obj=Pred, "tpr", "fpr")
-AUC <- performance(prediction.obj=Pred, "auc")
-plot(Perf, col="black", add=TRUE, lwd=2)
-text(x=.25, y=.05, labels=paste("AUC Partial least square=", format(x=AUC@y.values, digits=2)), col="black", adj=0, cex=.8)
-
+title(main="performance of the models 
+predicting the probability of 3 years OS",outer=TRUE)
+text(x=.5, y=.25, labels=paste(txtClin), col="royalblue", adj=0, cex=.9)
+text(x=.5, y=.2, labels=paste(txtEnet), col="red", adj=0, cex=.9)
+text(x=.5, y=.15, labels=paste(txtRF), col="orange", adj=0, cex=.9)
+text(x=.5, y=.1, labels=paste(txtPcr), col="darkgreen", adj=0, cex=.9)
+text(x=.5, y=.05, labels=paste(txtPls), col="black", adj=0, cex=.9)
 
 ######################################################################################################################################
 # 8. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
