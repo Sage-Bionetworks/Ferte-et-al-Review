@@ -8,15 +8,14 @@
 ## Visualizing the results of clinico-genomic models of 3-year overall survival in lung cancer
 
 ## REQUIRED LIBRARIES
-require(sessionTools)
 require(synapseClient)
 require(ggplot2)
 
-
-
-
-
 ## ROC CURVES USING THE pROC OBJECTS
+# makeDF <- function(rocObject){
+#   rocDF <- data.frame(rep(names(rocObect)))
+# }
+
 clinDF <- data.frame(rep('Clinical', length(rocClin$specificities)),
                          1 - rocClin$specificities, rocClin$sensitivities)
 colnames(clinDF) <- c('Study', 'X', 'Y')
@@ -39,6 +38,7 @@ colnames(rfDF) <- c('Study', 'X', 'Y')
 
 fullDF <- rbind(clinDF, enetDF, pcrDF, plsDF, rfDF)
 
+# Plot them
 clinRocPlot <- ggplot(fullDF, aes(x = X, y = Y, group = Study)) + 
   geom_path(aes(colour = Study)) +
   geom_abline(slope = 1, colour = 'black') +
