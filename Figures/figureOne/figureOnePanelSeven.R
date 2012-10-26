@@ -9,6 +9,7 @@
 require(synapseClient)
 figFuncEnt <- loadEntity('syn1446521')
 attach(figFuncEnt)
+require(Biobase)
 
 ## FIND THE SYNAPSE ENTITIES ON HGU133A PLATFORM
 projectQuery <- synapseQuery('SELECT id, name FROM entity WHERE entity.parentId == "syn87682"')
@@ -57,7 +58,7 @@ dchipDat <- exprs(hgu133aEntList$HGU133a_dCHIP$objects$HGU133A_dCHIP)
 dchipDat <- cbind(dchipDat[ , dirSamps], dchipDat[ , zhuSamps])
 
 hgu133aDchipPcPlot <- generatePcPlot(dchipDat) +
-  opts(title = 'MAS5 Normalized Together by Prin. Comp.\n')
+  opts(title = 'dCHIP Normalized Together by Prin. Comp.\n')
 
 ## BARCODE
 barDat <- hgu133aEntList$HGU133a_barcode$objects$HGU133A_barcode
