@@ -141,7 +141,7 @@ boxplot(yhatPcr ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year 
 stripchart(yhatPcr ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ###################################################################################################################
-# 6. partial leased square
+# 6. partial least squares
 ##############################################################################################################
 fitPls <- plsr(dir_clin$y_dir ~ t(x), ncomp=10,validation = "CV", family="binomial")
 yhatPls <- predict(fitPls, comps = 1:9,t(z), type="response")
