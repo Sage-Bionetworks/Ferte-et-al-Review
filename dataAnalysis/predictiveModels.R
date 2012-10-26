@@ -2,6 +2,7 @@
 # 10/11/2012
 # Sage Bionetworks
 
+
 # code to develop the model in the Director's dataset (TS) and validate it in the Zhu dataset (VS)
 # the dependant variable (i.e. variable to be predicted) is the 3 year propbability of OS
 
@@ -141,7 +142,7 @@ boxplot(yhatPcr ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year 
 stripchart(yhatPcr ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ###################################################################################################################
-# 6. partial least squares
+# 6. partial leased square
 ##############################################################################################################
 fitPls <- plsr(dir_clin$y_dir ~ t(x), ncomp=10,validation = "CV", family="binomial")
 yhatPls <- predict(fitPls, comps = 1:9,t(z), type="response")
