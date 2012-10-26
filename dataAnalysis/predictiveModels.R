@@ -7,87 +7,39 @@
 # the dependant variable (i.e. variable to be predicted) is the 3 year propbability of OS
 
 # load the packages that are neeeded
+require(synapseClient)
 require(glmnet)
 require(randomForest)
-require(synapseClient)
 require(caret)
 require(affy)
 require(survival)
 require(pROC)
 require(pls)
 require(gplots)
+
 set.seed(12221981)
+
 synapseLogin()
 
 ######################################################################################################################################
-# 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
+# 1. load the preprocessed datasets zhu and dir
 ######################################################################################################################################
 
-# load the rma normalized data from synapse
-zhu <- loadEntity('syn1436971')
-zhu <- zhu$objects$Zhu_rma
-dir <- loadEntity('syn1440819')
-dir <- dir$objects$Dir_rma
-
-# load the clin data data from synapse
-zhu_clin <- loadEntity('syn1438225')
-zhu_clin <- zhu_clin$objects$ZhuClinF
-dir_clin <- loadEntity('syn1438222')
-dir_clin <- dir_clin$objects$DirClinF
-
-# Probability of 3 year overall survival is our dependant variable (vectors of response): y_dir and y_zhu
-# make data coherent for expression and clinical data
-zhu_clin$y_zhu <-  ifelse(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,ifelse(zhu_clin$VITAL_STATUS==0,NA,0))
-idzhu <- rownames(zhu_clin)[ !is.na(zhu_clin$y_zhu) ]
-zhu_clin <- zhu_clin[idzhu, ]
-zhu <- zhu[, idzhu]
-zhu <- exprs(zhu)
-
-dir_clin$y_dir <-  ifelse(dir_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH>36,1,ifelse(dir_clin$VITAL_STATUS==0,NA,0))
-iddir <- rownames(dir_clin)[ !is.na(dir_clin$y_dir) ]
-dir_clin <- dir_clin[iddir, ]
-dir <- dir[, iddir]
-dir <- exprs(dir)
-
-# get rid of the control probesets
-controlProbes <- grep("AFFX",rownames(zhu))
-zhu <- zhu[-controlProbes, ]
-dir <- dir[rownames(zhu), ]
-
-# quantile normalize zhu to have the same disribution than dir (make them comparable)
-zhu <- normalize2Reference(zhu, rowMeans(dir))
-
-# focus on the most variant probes
-prob.var1  <- apply(zhu, 1, var)
-prob.var2 <- apply(dir, 1, var)
-mean.prob.var <- apply(cbind(prob.var1, prob.var2), 1, mean)
-tmp <- which(mean.prob.var > quantile(mean.prob.var, probs=.8))
-dir <- dir[tmp, ]
-zhu <- zhu[tmp, ]
-rm(tmp, mean.prob.var, prob.var1, prob.var2)
-
-# make the two datasets have the same mean and variance
-# Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
-normalize_to_X <- function(mean.x, sd.x, Y){
-  m.y <- rowMeans(Y)
-  sd.y <- apply(Y, 1, sd)
-  Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
-  Y.adj[sd.y == 0] <- mean.x[sd.y==0]
-  Y.adj
-}
-
-zhu <- normalize_to_X(rowMeans(dir),apply(dir,1,sd),zhu)
+# load the supervised normalized data from synapse
+supNormEnt <- loadEntity("syn1447062")
+dirClin <- supNormEnt$objects$dirClin
+dirExpr <- supNormEnt$objects$dirExpr
+zhuClin <- supNormEnt$objects$zhuClin
+zhuExpr <- supNormEnt$objects$zhuExpr
 
 ######################################################################################################################################
-# 2. build a model based on clin variables of interest only (pStage, gender, age) (logisitic regression)
+# 2. build a model of os3yr based on P_Stage only (logisitic regression)
 ######################################################################################################################################
 
-dir_clin$P_Stage <- factor(dir_clin$P_Stage)
-zhu_clin$P_Stage <- factor(zhu_clin$P_Stage, levels=levels(dir_clin$P_Stage))
+fitClin <- glm(os3yr ~ P_Stage, data = dirClin, family = "binomial")
+summary(fitClin)
 
-fitClin <- glm(y_dir ~ P_Stage, data = dir_clin, family = "binomial")
-#summary(fitClin)
-yhatClin <- predict(fitClin, zhu_clin, type = "response")
+yhatClin <- predict(fitClin, zhuClin, type = "response")
 
 #########################################################################################################################################
 # 3. build the model based on molecular features using elasticnet 
@@ -95,70 +47,70 @@ yhatClin <- predict(fitClin, zhu_clin, type = "response")
 #########################################################################################################################################
 
 # let x and z be the datsets combining molecular features and P Stage
-dirP <- t(model.matrix(~ -1 + dir_clin$P_Stage))
-rownames(dirP) <- sub("dir_clin$", "", rownames(dirP), fixed=T)
+dirP <- t(model.matrix(~ -1 + dirClin$P_Stage))
+rownames(dirP) <- sub("dirClin$", "", rownames(dirP), fixed=T)
 rownames(dirP) <- sub(")", "_", rownames(dirP), fixed=t)
-x <- rbind(dir, dirP)
+x <- rbind(dirExpr, dirP)
 
-zhuP <- t(model.matrix(~ -1 + zhu_clin$P_Stage))
-rownames(zhuP) <- sub("zhu_clin$", "", rownames(zhuP), fixed=T)
+zhuP <- t(model.matrix(~ -1 + zhuClin$P_Stage))
+rownames(zhuP) <- sub("zhuClin$", "", rownames(zhuP), fixed=T)
 rownames(zhuP) <- sub(")", "_", rownames(zhuP), fixed=t)
-z <- rbind(zhu, zhuP)
+z <- rbind(zhuExpr, zhuP)
 
 # let pen be a vector of penalty factors for each coefficient. We want to preserve the pathological stage in the model, so we assign it 0 as penalty factor.
-pen <- c(rep(1, nrow(dir)), rep(0, nrow(dirP)))
+pen <- c(rep(1, nrow(dirExpr)), rep(0, nrow(dirP)))
 
 # run the elastic net model
-cv.fit <- cv.glmnet(x=t(x), y=factor(dir_clin$y_dir), nfolds=10, alpha=.1, family="binomial", penalty.factor=pen)
+cv.fit <- cv.glmnet(x=t(x), y=factor(dirClin$os3yr), nfolds=10, alpha=.1, family="binomial", penalty.factor=pen)
 plot(cv.fit)
-fitEnet <- glmnet(x=t(x), y=factor(dir_clin$y_dir), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=pen)
+fitEnet <- glmnet(x=t(x), y=factor(dirClin$os3yr), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=pen)
 yhatEnet <- predict(fitEnet, t(z), type="response", s="lambda.min")
 
-boxplot(yhatEnet ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
-stripchart(yhatEnet ~ zhu_clin$y_zhu,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+boxplot(yhatEnet ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
+stripchart(yhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
 ######################################################################################################################################
 
 # let's find the optimal value of mtry
-a <- tuneRF(x=t(x), y=factor(dir_clin$y_dir), stepFactor=1.5, doBest=TRUE, trace=TRUE, ntreeTry=1000,type="regression")
+a <- tuneRF(x=t(x), y=factor(dirClin$os3yr), stepFactor=1.5, doBest=TRUE, trace=TRUE, ntreeTry=1000,type="regression")
 
 # run the model with this mtry value
-fitRF <- randomForest(x=t(x), y=factor(dir_clin$y_dir), mtry=a$mtry, do.trace=10, ntree=1000, importance=TRUE,type="regression")
+fitRF <- randomForest(x=t(x), y=factor(dirClin$os3yr), mtry=a$mtry, do.trace=10, ntree=1000, importance=TRUE,type="regression")
 yhatRF <- predict(fitRF, t(z), type="prob")[,2]
 
-boxplot(yhatRF ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Random Forest - molecular + clinical features")
-stripchart(yhatRF ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+boxplot(yhatRF ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Random Forest - molecular + clinical features")
+stripchart(yhatRF ~ zhuClin$os3yr, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ###################################################################################################################
 # 5. principal component regression
 ##############################################################################################################
 
-fitPcr <- pcr(dir_clin$y_dir ~ t(x), ncomp=10,validation = "CV", family="binomial")
+fitPcr <- pcr(dirClin$os3yr ~ t(x), ncomp=10,validation = "CV", family="binomial")
 yhatPcr <- predict(fitPcr, comps = 1:9,t(z), type="response")
 
-boxplot(yhatPcr ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
-stripchart(yhatPcr ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+boxplot(yhatPcr ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
+stripchart(yhatPcr ~ zhuClin$os3yr, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ###################################################################################################################
 # 6. partial leased square
 ##############################################################################################################
-fitPls <- plsr(dir_clin$y_dir ~ t(x), ncomp=10,validation = "CV", family="binomial")
+fitPls <- plsr(dirClin$os3yr ~ t(x), ncomp=10,validation = "CV", family="binomial")
 yhatPls <- predict(fitPls, comps = 1:9,t(z), type="response")
 
-boxplot(yhatPls ~ zhu_clin$y_zhu, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
-stripchart(yhatPls ~ zhu_clin$y_zhu, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+boxplot(yhatPls ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Principal component regression - molecular + clinical features")
+stripchart(yhatPls ~ zhuClin$os3yr, pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ######################################################################################################################################
 # 7. plot ROC curves to asses the performance of our models using pROC package
 ######################################################################################################################################
 
-rocClin <- roc(predictor=as.numeric(yhatClin),response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
-rocEnet <- roc(predictor=as.numeric(yhatEnet), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
-rocRF <- roc(predictor=as.numeric(yhatRF), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
-rocPcr <- roc(predictor=as.numeric(yhatPcr), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
-rocPls <- roc(predictor=as.numeric(yhatPls), response=as.numeric(zhu_clin$y_zhu),ci=TRUE)
+rocClin <- roc(predictor=as.numeric(yhatClin),response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocEnet <- roc(predictor=as.numeric(yhatEnet), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocRF <- roc(predictor=as.numeric(yhatRF), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocPcr <- roc(predictor=as.numeric(yhatPcr), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocPls <- roc(predictor=as.numeric(yhatPls), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 
 plot.roc(rocClin,col="royalblue")
 plot.roc(rocEnet,add=TRUE,col="red")
@@ -199,24 +151,24 @@ names(riskPls) <- rownames(yhatPls)
 # for each model, draw the kaplan meir curves and compute the log rank test
 par(mfrow=c(1,1))
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskClin, rho=0)
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskClin, rho=0)
 abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskEnet, rho=0)
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet, rho=0)
 abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskRF, rho=0)
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskRF, rho=0)
 abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPcr, rho=0)
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPcr, rho=0)
 abline(v=36,col="red",lty=2)
 
-plot(survfit(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
-survdiff(Surv(zhu_clin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhu_clin$VITAL_STATUS) ~ riskPls, rho=0)
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPls, rho=0)
 abline(v=36,col="red",lty=2)
 
 ######################################################################################################################################
