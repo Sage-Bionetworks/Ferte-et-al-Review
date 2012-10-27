@@ -12,9 +12,15 @@ require(synapseClient)
 require(ggplot2)
 
 ## ROC CURVES USING THE pROC OBJECTS
-# makeDF <- function(rocObject){
-#   rocDF <- data.frame(rep(names(rocObect)))
-# }
+# Define a function 'makeRocDF' to make a dataframe suitable for ggplot2
+makeRocDF <- function(rocObject){
+  rocDF <- data.frame(rep(deparse(substitute(rocObject)), length(rocObject$specificities)),
+                      1 - rocObject$specificities, rocObject$sensitivities)
+  names(rocDF) <- c('Study', 'X', 'Y')
+  return(rocDF)
+}
+
+foo <- makeRocDF(rocClin)
 
 clinDF <- data.frame(rep('Clinical', length(rocClin$specificities)),
                          1 - rocClin$specificities, rocClin$sensitivities)
