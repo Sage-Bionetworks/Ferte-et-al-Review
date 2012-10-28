@@ -119,11 +119,11 @@ plot.roc(rocPcr,add=TRUE,col="darkgreen")
 plot.roc(rocPls,add=TRUE,col="black")
 
 #concatenate AUC + 95CI 
-txtClin <- paste("AUC logit clin. =",format(x=rocClin$auc, digits=2),", 95% CI:",format(x=as.numeric(rocClin$ci)[1],digits=2),"-",format(x=as.numeric(rocClin$ci)[3],digits=2))
+txtClin <- paste("AUC Logit Clin. =",format(x=rocClin$auc, digits=2),", 95% CI:",format(x=as.numeric(rocClin$ci)[1],digits=2),"-",format(x=as.numeric(rocClin$ci)[3],digits=2))
 txtEnet <- paste("AUC Elastic Net =",format(x=rocEnet$auc, digits=2),", 95% CI:",format(x=as.numeric(rocEnet$ci)[1],digits=2),"-",format(x=as.numeric(rocEnet$ci)[3],digits=2))
 txtRF <- paste("AUC Random Forest =",format(x=rocRF$auc, digits=2),", 95% CI:",format(x=as.numeric(rocRF$ci)[1],digits=2),"-",format(x=as.numeric(rocRF$ci)[3],digits=2))
-txtPcr <- paste("AUC Princ. Comp. Reg. =",format(x=rocPcr$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPcr$ci)[1],digits=2),"-",format(x=as.numeric(rocPcr$ci)[3],digits=2))
-txtPls <- paste("AUC Partial Least Square =",format(x=rocPls$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPls$ci)[1],digits=2),"-",format(x=as.numeric(rocPls$ci)[3],digits=2))
+txtPcr <- paste("AUC PrinComp. Reg. =",format(x=rocPcr$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPcr$ci)[1],digits=2),"-",format(x=as.numeric(rocPcr$ci)[3],digits=2))
+txtPls <- paste("AUC Partial Least Squares =",format(x=rocPls$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPls$ci)[1],digits=2),"-",format(x=as.numeric(rocPls$ci)[3],digits=2))
 
 title(main="performance of the models 
 predicting the probability of 3 years OS",outer=TRUE)
