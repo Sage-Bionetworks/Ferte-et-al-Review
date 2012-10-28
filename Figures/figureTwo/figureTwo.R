@@ -12,37 +12,27 @@ require(synapseClient)
 require(ggplot2)
 
 ## ROC CURVES USING THE pROC OBJECTS
-# Define a function 'makeRocDF' to make a dataframe suitable for ggplot2
-makeRocDF <- function(rocObject){
-  rocDF <- data.frame(rep(deparse(substitute(rocObject)), length(rocObject$specificities)),
+# Create a list of pROC objects
+rocList <- list('clinical' = rocClin,
+                'elasticnet' = rocEnet,
+                'princompreg' = rocPcr,
+                'partleastsq' = rocPls,
+                'randomforest' = rocRF)
+
+# Loop through the list. Had originally used lapply, but passing object names to the dataframes was
+# unnnecessarily complicated using apply
+rocDFList <- vector('list', length(rocList))
+for(i in 1:length(rocList)){
+  methodName <- names(rocList)[i]
+  rocObject <- rocList[[i]]
+  rocDF <- data.frame(rep(methodName, length(rocObject$specificities)),
                       1 - rocObject$specificities, rocObject$sensitivities)
-  names(rocDF) <- c('Study', 'X', 'Y')
-  return(rocDF)
+  colnames(rocDF) <- c('Study', 'X', 'Y')
+  rocDFList[[i]] <- rocDF
+  names(rocDFList)[i] <- methodName
 }
 
-foo <- makeRocDF(rocClin)
-
-clinDF <- data.frame(rep('Clinical', length(rocClin$specificities)),
-                         1 - rocClin$specificities, rocClin$sensitivities)
-colnames(clinDF) <- c('Study', 'X', 'Y')
-
-enetDF <- data.frame(rep('ElasticNet', length(rocEnet$specificities)),
-                     1 - rocEnet$specificities, rocEnet$sensitivities)
-colnames(enetDF) <- c('Study', 'X', 'Y')
-
-pcrDF <- data.frame(rep('PrinCompReg', length(rocPcr$specificities)),
-                    1 - rocPcr$specificities, rocPcr$sensitivities)
-colnames(pcrDF) <- c('Study', 'X', 'Y')
-
-plsDF <- data.frame(rep('PartLeastSq', length(rocPls$specificities)),
-                    1 - rocPls$specificities, rocPls$sensitivities)
-colnames(plsDF) <- c('Study', 'X', 'Y')
-
-rfDF <- data.frame(rep('RandomForest', length(rocRF$specificities)),
-                    1 - rocRF$specificities, rocRF$sensitivities)
-colnames(rfDF) <- c('Study', 'X', 'Y')
-
-fullDF <- rbind(clinDF, enetDF, pcrDF, plsDF, rfDF)
+fullDF <- Reduce(rbind, rocDFList)
 
 # Plot them
 clinRocPlot <- ggplot(fullDF, aes(x = X, y = Y, group = Study)) + 
