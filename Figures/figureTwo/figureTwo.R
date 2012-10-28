@@ -15,9 +15,15 @@ require(ggplot2)
 # Create a list of pROC objects
 rocList <- list('clinical' = rocClin,
                 'elasticnet' = rocEnet,
-                'princompreg' = rocPcr,
+                'princomp' = rocPcr,
                 'partleastsq' = rocPls,
                 'randomforest' = rocRF)
+
+aucCiList <- list('clinical' = txtClin,
+                  'elasticnet' = txtEnet,
+                  'princomp' = txtPcr,
+                  'partleastsq' = txtPls,
+                  'randomforest' = txtRF)
 
 # Loop through the list. Had originally used lapply, but passing object names to the dataframes was
 # unnnecessarily complicated using apply
@@ -25,7 +31,7 @@ rocDFList <- vector('list', length(rocList))
 for(i in 1:length(rocList)){
   methodName <- names(rocList)[i]
   rocObject <- rocList[[i]]
-  rocDF <- data.frame(rep(methodName, length(rocObject$specificities)),
+  rocDF <- data.frame(rep(aucCiList[[i]], length(rocObject$specificities)),
                       1 - rocObject$specificities, rocObject$sensitivities)
   colnames(rocDF) <- c('Study', 'X', 'Y')
   rocDFList[[i]] <- rocDF
