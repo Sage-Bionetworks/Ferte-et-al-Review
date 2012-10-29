@@ -11,6 +11,17 @@
 require(synapseClient)
 require(ggplot2)
 
+## PULL DOWN THE predictiveModels.R WORKSPACE
+predModEnt <- loadEntity('syn1447949')
+
+# Unpack the workspace from the entity
+objNames <- names(predModEnt$objects)
+for(i in 1:length(predModEnt$objects)){
+  varName <- objNames[i]
+  targetObj <- predModEnt$objects[[i]]
+  assign(varName, targetObj)
+}
+
 ## ROC CURVES USING THE pROC OBJECTS
 # Create a list of pROC objects
 rocList <- list('clinical' = rocClin,
