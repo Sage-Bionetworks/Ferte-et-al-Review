@@ -66,14 +66,38 @@ plot(cv.fit)
 fitEnet <- glmnet(x=t(x), y=factor(dirClin$os3yr), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=pen)
 
 yhatEnet <- predict(fitEnet, t(z), type="response", s="lambda.min")
-
 boxplot(yhatEnet ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 # attempt to build a more robust classifier( bootstrapping)
-
+fun <- function(x){
 N <- sample(colnames(dirExpr),274,replace=TRUE)
-tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=pen)
+try.cv.fit <- cv.glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), nfolds=10, alpha=.1, family="binomial", penalty.factor=pen)
+tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), family="binomial", alpha=.1, lambda=try.cv.fit$lambda.min, penalty.factor=pen)$beta
+}
+
+try <- replicate(n=1000,fun(x=x))
+tmp <- table(unlist(lapply(c(1:length(try)),function(x){which(abs(try[[x]])>0)})))
+select_features <- as.numeric(names(which(tmp>=quantile(tmp,probs=.99))))
+
+w <- as.data.frame(t(x[select_features,]))
+w$os3yr <- dirClin$os3yr
+
+# run the logit model on the top selected features
+newlogitfit <- glm(w$os3yr~. ,data = w, family = "binomial")
+
+newyhatlogit <- predict(object=newlogitfit, newdata=as.data.frame(t(z)), type="response")
+boxplot(newyhatlogit ~ zhuClin$os3yr, ylab="prediction of 3-year OS probability (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
+stripchart(newyhatlogit ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+
+# run a new Enet model
+newpen <- rep(1,times=4448)
+newpen[select_features] <- 0
+newfitEnet <- glmnet(x=t(x), y=factor(dirClin$os3yr), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=newpen)
+
+newyhatEnet <- predict(newfitEnet, t(z), type="response", s="lambda.min")
+boxplot(newyhatEnet ~ zhuClin$os3yr, ylab="prediction of 3-year OS probability (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
+stripchart(newyhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
@@ -114,15 +138,20 @@ stripchart(yhatPls ~ zhuClin$os3yr, pch=20, col="royalblue", vertical=TRUE, add=
 
 rocClin <- roc(predictor=as.numeric(yhatClin),response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocEnet <- roc(predictor=as.numeric(yhatEnet), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocnewEnet1 <- roc(predictor=as.numeric(newyhatlogit), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocnewEnet2 <- roc(predictor=as.numeric(newyhatEnet), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocRF <- roc(predictor=as.numeric(yhatRF), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocPcr <- roc(predictor=as.numeric(yhatPcr), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocPls <- roc(predictor=as.numeric(yhatPls), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+
+
 
 plot.roc(rocClin,col="royalblue")
 plot.roc(rocEnet,add=TRUE,col="red")
 plot.roc(rocRF,add=TRUE,col="orange")
 plot.roc(rocPcr,add=TRUE,col="darkgreen")
 plot.roc(rocPls,add=TRUE,col="black")
+plot.roc(rocBootEnet,add=TRUE,col="green")
 
 #concatenate AUC + 95CI 
 txtClin <- paste("Logit Clin. AUC =",format(x=rocClin$auc, digits=2),", 95% CI:",format(x=as.numeric(rocClin$ci)[1],digits=2),"-",format(x=as.numeric(rocClin$ci)[3],digits=2))
@@ -130,6 +159,7 @@ txtEnet <- paste("Elastic Net AUC =",format(x=rocEnet$auc, digits=2),", 95% CI:"
 txtRF <- paste("Random Forest AUC =",format(x=rocRF$auc, digits=2),", 95% CI:",format(x=as.numeric(rocRF$ci)[1],digits=2),"-",format(x=as.numeric(rocRF$ci)[3],digits=2))
 txtPcr <- paste("PrinComp AUC =",format(x=rocPcr$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPcr$ci)[1],digits=2),"-",format(x=as.numeric(rocPcr$ci)[3],digits=2))
 txtPls <- paste("Part. Least Sq. AUC =",format(x=rocPls$auc, digits=2),", 95% CI:",format(x=as.numeric(rocPls$ci)[1],digits=2),"-",format(x=as.numeric(rocPls$ci)[3],digits=2))
+txtBootEnet <- paste("Bootstrap Elastic Net AUC =",format(x=rocBootEnet$auc, digits=2),", 95% CI:",format(x=as.numeric(rocBootEnet$ci)[1],digits=2),"-",format(x=as.numeric(rocBootEnet$ci)[3],digits=2))
 
 title(main="performance of the models 
 predicting the probability of 3 years OS",outer=TRUE)
@@ -138,6 +168,7 @@ text(x=.65, y=.2, labels=paste(txtEnet), col="red", adj=0)
 text(x=.65, y=.15, labels=paste(txtRF), col="orange", adj=0)
 text(x=.65, y=.1, labels=paste(txtPcr), col="darkgreen", adj=0)
 text(x=.65, y=.05, labels=paste(txtPls), col="black", adj=0)
+text(x=.65, y=.3, labels=paste(txtBootEnet), col="green", adj=0)
 
 ######################################################################################################################################
 # 8. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
