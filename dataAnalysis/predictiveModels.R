@@ -19,7 +19,7 @@ require(gplots)
 
 set.seed(12221981)
 
-synapseLogin()
+synapseLogin("charles.ferte@sagebase.org","charles")
 
 ######################################################################################################################################
 # 1. load the preprocessed datasets zhu and dir
@@ -73,24 +73,7 @@ stripchart(yhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=
 # attempt to build a more robust classifier( bootstrapping)
 
 N <- sample(colnames(dirExpr),274,replace=TRUE)
-tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin$os3yr[N]), family="binomial", alpha=.1, ambda=cv.fit$lambda.min,        penalty.factor=pen)$beta
-
-
-# first shuffle the vector of response to get a distribution of random features selected
-randomfit <- replicate(n=1000,
-blah <- unlist(lapply(c(1:1000),function(x){which(abs(tryfit[[x]])>0)}))
-hist(sort(table(blah),decreasing=TRUE),breaks=200)
-
-rownames(x)[as.numeric(names(sort(table(blah),decreasing=TRUE)[1:168]))]
-
-nulldist <- tryfit <- replicate(n=1000,glmnet(x=t(x[,sample(colnames(dirExpr),200)]), y=factor(dirClin$os3yr[which(rownames(dirClin) %in% sample(colnames(dirExpr),200))]), 
-                                              family="binomial", alpha=.1, 
-                                              lambda=cv.fit$lambda.min, 
-                                              penalty.factor=pen)$beta)
-blah <- unlist(lapply(c(1:1000),function(x){which(abs(tryfit[[x]])>0)}))
-
-
-replicate(n=10,expr=)
+tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=pen)
 
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
