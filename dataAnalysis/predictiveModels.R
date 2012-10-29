@@ -64,10 +64,33 @@ pen <- c(rep(1, nrow(dirExpr)), rep(0, nrow(dirP)))
 cv.fit <- cv.glmnet(x=t(x), y=factor(dirClin$os3yr), nfolds=10, alpha=.1, family="binomial", penalty.factor=pen)
 plot(cv.fit)
 fitEnet <- glmnet(x=t(x), y=factor(dirClin$os3yr), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=pen)
+
 yhatEnet <- predict(fitEnet, t(z), type="response", s="lambda.min")
 
 boxplot(yhatEnet ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+
+# attempt to build a more robust classifier( bootstrapping)
+
+N <- sample(colnames(dirExpr),274,replace=TRUE)
+tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin$os3yr[N]), family="binomial", alpha=.1, ambda=cv.fit$lambda.min,        penalty.factor=pen)$beta
+
+
+# first shuffle the vector of response to get a distribution of random features selected
+randomfit <- replicate(n=1000,
+blah <- unlist(lapply(c(1:1000),function(x){which(abs(tryfit[[x]])>0)}))
+hist(sort(table(blah),decreasing=TRUE),breaks=200)
+
+rownames(x)[as.numeric(names(sort(table(blah),decreasing=TRUE)[1:168]))]
+
+nulldist <- tryfit <- replicate(n=1000,glmnet(x=t(x[,sample(colnames(dirExpr),200)]), y=factor(dirClin$os3yr[which(rownames(dirClin) %in% sample(colnames(dirExpr),200))]), 
+                                              family="binomial", alpha=.1, 
+                                              lambda=cv.fit$lambda.min, 
+                                              penalty.factor=pen)$beta)
+blah <- unlist(lapply(c(1:1000),function(x){which(abs(tryfit[[x]])>0)}))
+
+
+replicate(n=10,expr=)
 
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
