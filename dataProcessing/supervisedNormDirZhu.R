@@ -77,6 +77,43 @@ normalize_to_X <- function(mean.x, sd.x, Y){
 zhuExpr <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
 
 
+####################################################################################################################################
+# supervised normalization using snm adjusting for the inter-study batch, the intra batch, the histology, the stage and the gender
+####################################################################################################################################
+require(snm)
+require(affy)
+
+# load the raw data from dir and zhu
+zhuraw <- loadEntity('syn1439020')
+dirraw <- loadEntity('syn1422422')
+filepath <- c(zhuraw$cacheDir,dirraw$cacheDir)
+filenames <- list.celfiles(path=filepath,full.names=TRUE)
+expr <- ReadAffy(filenames=filenames)
+expr <- exprs(expr)
+
+# load the clinical data of dir and zhu
+zhuclin <- loadEntity('syn1438225')
+zhuclin <- zhuclin$objects$ZhuClinF
+dirclin <- loadEntity('syn1438222')
+dirclin <- dirclin$objects$DirClinF
+allclin <- rbind(zhuclin,dirclin)
+allclin$study <- c(rep("zhu",times=62),rep("dir",times=299))
+
+## load the dataset normalized and where SITE is removed:
+bio.var <- model.matrix(~ allclin$Histology + allclin$GENDER + allclin$P_Stage)
+adj.var <- model.matrix(~ allclin$SCANBATCH + allclin$study)
+snm.fit <- snm(expr, 
+               bio.var=bio.var, 
+               adj.var=adj.var, 
+               rm.adj=TRUE)
+
+new.expr <- snm.fit$norm.dat
+
+
+
+####################################################################################################################################
+
+
 ## PUSH INTERMEDIATE OBJECT TO SYNAPSE
 supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
 supNormEnt <- addObject(supNormEnt, zhuExpr)
