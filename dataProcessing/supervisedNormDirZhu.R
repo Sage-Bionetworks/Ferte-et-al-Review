@@ -89,7 +89,7 @@ dirraw <- loadEntity('syn1422422')
 filepath <- c(zhuraw$cacheDir,dirraw$cacheDir)
 filenames <- list.celfiles(path=filepath,full.names=TRUE)
 expr <- ReadAffy(filenames=filenames)
-expr <- exprs(expr)
+expr <- pm(expr)
 
 # load the clinical data of dir and zhu
 zhuclin <- loadEntity('syn1438225')
@@ -97,11 +97,11 @@ zhuclin <- zhuclin$objects$ZhuClinF
 dirclin <- loadEntity('syn1438222')
 dirclin <- dirclin$objects$DirClinF
 allclin <- rbind(zhuclin,dirclin)
-allclin$study <- c(rep("zhu",times=62),rep("dir",times=299))
 
-## load the dataset normalized and where SITE is removed:
-bio.var <- model.matrix(~ allclin$Histology + allclin$GENDER + allclin$P_Stage)
-adj.var <- model.matrix(~ allclin$SCANBATCH + allclin$study)
+## compute the new data normalized 
+# corrected for the SCANBATCH (batches determined by C.F according to the CEL file date of production and by the sudy status dir or zhu) 
+bio.var <- model.matrix(~ allclin$GENDER + allclin$P_Stage)
+adj.var <- model.matrix(~ allclin$SCANBATCH )
 snm.fit <- snm(expr, 
                bio.var=bio.var, 
                adj.var=adj.var, 
