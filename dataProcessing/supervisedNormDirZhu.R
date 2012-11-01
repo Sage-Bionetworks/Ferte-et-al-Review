@@ -1,9 +1,11 @@
 # Charles Ferté,MD MSc
 # 10/11/2012
 # Sage Bionetworks
-#####
+
+###################################################################################
+# supervisedNormDirZhu.R
 # code for supervised normalization of the Director's dataset (TS) and the Zhu dataset (VS)
-#####
+###################################################################################
 
 # load the packages that are neeeded
 require(synapseClient)
@@ -17,12 +19,12 @@ synapseLogin()
 ######################################################################################################################################
 
 # load the rma normalized data from synapse
-zhuExpr <- loadEntity('syn1436971')
+zhuExpr <- loadEntity('syn1436971') #RMA normalized Zhu data
 zhuExpr <- zhuExpr$objects$Zhu_rma
-dirExpr <- loadEntity('syn1440819')
+dirExpr <- loadEntity('syn1440819') #RMA normalized data from director's challenge
 dirExpr <- dirExpr$objects$Dir_rma
 
-# load the clin data data from synapse
+# load the clinical data data from synapse
 zhuClin <- loadEntity('syn1438225')
 zhuClin <- zhuClin$objects$ZhuClinF
 dirClin <- loadEntity('syn1438222')
@@ -84,7 +86,9 @@ require(snm)
 require(affy)
 
 # load the raw data from dir and zhu
-zhuraw <- loadEntity('syn1439020')
+# the steps are identical to unsupervisedNorm.R
+
+zhuraw <- loadEntity('syn1439020') 
 dirraw <- loadEntity('syn1422422')
 filepath <- c(zhuraw$cacheDir,dirraw$cacheDir)
 filenames <- list.celfiles(path=filepath,full.names=TRUE)
@@ -124,9 +128,9 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 
 ## PUSH INTERMEDIATE OBJECT TO SYNAPSE
-supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
-supNormEnt <- addObject(supNormEnt, zhuExpr)
-supNormEnt <- addObject(supNormEnt, dirExpr)
-supNormEnt <- addObject(supNormEnt, zhuClin)
-supNormEnt <- addObject(supNormEnt, dirClin)
-supNormEnt <- storeEntity(supNormEnt)
+#supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
+#supNormEnt <- addObject(supNormEnt, zhuExpr)
+#supNormEnt <- addObject(supNormEnt, dirExpr)
+#supNormEnt <- addObject(supNormEnt, zhuClin)
+#supNormEnt <- addObject(supNormEnt, dirClin)
+#supNormEnt <- storeEntity(supNormEnt)

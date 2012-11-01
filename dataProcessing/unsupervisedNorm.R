@@ -3,6 +3,7 @@
 # Sage Bionetworks
 
 ###################################################################################
+# unsupervisedNorm.R
 # perform various unsupervised normalization methods on the different data
 ###################################################################################
 
@@ -28,13 +29,14 @@ dataset <- "Dir"
 ###################################################################################
 # load the data from Synapse
 ###################################################################################
-Zhu <- loadEntity('syn1421817')
-Dir <- loadEntity('syn1422422')
-Hou <- loadEntity('syn1422295')
-Lusc <- loadEntity('syn1426948')
+Zhu <- loadEntity('syn1439020') #CEL files from Zhu et al
+Dir <- loadEntity('syn1422422') #CEL Files from the Directors Challenge
+Hou <- loadEntity('syn1422295') #CEL files from Hou et al
+Lusc <- loadEntity('syn1426948') #CEL files from TCGA
 
 ###################################################################################
-# where are the CEL files
+# now that the files are downloaded
+# find them in the cache directory
 ###################################################################################
 Dir_CEL <- Dir$cacheDir
 Zhu_CEL <- Zhu$cacheDir
@@ -42,7 +44,7 @@ Hou_CEL <- Hou$cacheDir
 Lusc_CEL <- Lusc$cacheDir
 
 ###################################################################################
-# read the CEL files as affy objects
+# and now read the CEL files as affy objects
 ###################################################################################
 datapath1  <-get(paste(dataset,"_CEL",sep=""))
 setwd(datapath1)
@@ -56,40 +58,42 @@ rawdata <- ReadAffy(filenames=list.celfiles(datapath1))
 ###################################################################################
 # perform rma normalization
 ###################################################################################
-tmp <- paste(dataset,"_rma",sep="")
+tmp <- paste(dataset,"_rma",sep="") #put rma at the end of the name to distinguish the results
 assign(tmp,rma(rawdata))
 
 ###################################################################################
 # perform gcrma normalization
 ###################################################################################
-tmp <- paste(dataset,"_gcrma",sep="")
+tmp <- paste(dataset,"_gcrma",sep="") #put gcrm at the end of the filenames
 assign(tmp,gcrma(rawdata))
 
 ###################################################################################
 # perform dCHIP normalization
 ###################################################################################
-tmp <- paste(dataset,"_dCHIP",sep="")
+tmp <- paste(dataset,"_dCHIP",sep="") #put dCHIP at the end of the names
 assign(tmp,expresso(rawdata, normalize.method = "invariantset", bg.correct = FALSE, pmcorrect.method = "pmonly",summary.method = "liwong"))
 
 ###################################################################################
 # perform MAS5 normalization
 ###################################################################################
-tmp <- paste(dataset,"_MAS5",sep="")
+tmp <- paste(dataset,"_MAS5",sep="") #put MAS5 at the end of the names
 assign(tmp,mas5(rawdata))
 
 ###################################################################################
 # perform fRMA and then Barcode normalization
 ###################################################################################
-tmp <- paste(dataset,"_frma",sep="")
+tmp <- paste(dataset,"_frma",sep="") #put frma at the end of the names
 assign(tmp,frma(rawdata, summarize = "random_effect"))
-tmp1 <- paste(dataset,"_barcode",sep="")
+tmp1 <- paste(dataset,"_barcode",sep="")  #put barcode at the end of the names 
 assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
 # save the data in Synapse
 #
 # Saving steps for initial entities back to Synapse.  
-#The ids will be accessible in the remainder of the code.
+# The ids will be accessible in the remainder of the code.
+# all of this code is commented out to ensure that there is no change to the entities
+# that already exist.
 ###################################################################################
 #require(synapseClient)
 #synapseLogin()
