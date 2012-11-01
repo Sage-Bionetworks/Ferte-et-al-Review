@@ -100,6 +100,12 @@ allclin <- rbind(zhuclin,dirclin)
 
 ## compute the new data normalized 
 # corrected for the SCANBATCH (batches determined by C.F according to the CEL file date of production and by the sudy status dir or zhu) 
+vec <- ifelse(substr(allclin$SCANBATCH,1,3)=="Dir",1,2)
+
+s <- svd(expr)
+plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
+
+
 bio.var <- model.matrix(~ allclin$GENDER + allclin$P_Stage)
 adj.var <- model.matrix(~ allclin$SCANBATCH )
 snm.fit <- snm(expr, 
@@ -108,8 +114,11 @@ snm.fit <- snm(expr,
                rm.adj=TRUE)
 
 new.expr <- snm.fit$norm.dat
+colnames(new.expr) <- colnames(expr)
+rownames(new.expr) <- rownames(expr)
 
-
+s <- svd(new.expr)
+plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 ####################################################################################################################################
 
