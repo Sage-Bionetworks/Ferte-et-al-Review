@@ -185,13 +185,13 @@ assign(tmp,new.expr)
 
 #############################################################################################
 
-#dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
-#dir_barcode <- createEntity(dir_barcode)
+#dir_snm <- Data(list(name = "dir_snm", parentId = 'syn87682'))
+#dir_snm <- createEntity(dir_snm)
 
 # add object into the data entity
-#dir_barcode <- addObject(dir_barcode,Dir_barcode)
+#dir_snm <- addObject(dir_snm,Dir_snm)
 
 # push the raw data into this entity
-#dir_barcode <- storeEntity(entity=dir_barcode)
+#dir_snm <- storeEntity(entity=dir_snm)
 #
 
