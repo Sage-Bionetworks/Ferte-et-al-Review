@@ -12,7 +12,7 @@ require(synapseClient)
 require(affy)
 require(caret)
 
-synapseLogin()
+#synapseLogin()
 
 ######################################################################################################################################
 # 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
@@ -56,11 +56,9 @@ zhuExpr <- zhuExpr[-controlProbes, ]
 dirExpr <- dirExpr[rownames(zhuExpr), ]
 
 # describe the latent structure
+vec <- c(rep(1,times=59),rep(2,times=274))
 s <- svd(cbind(zhuExpr,dirExpr))
 plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
-
-# quantile normalize zhu to have the same disribution than dir (make them comparable)
-#zhuExpr <- normalize2Reference(zhuExpr, rowMeans(dirExpr))
 
 # focus on the most variant probes
 probVarDir <- apply(dirExpr, 1, var)
@@ -72,7 +70,14 @@ zhuExpr <- zhuExpr[top20pct, ]
 s <- svd(cbind(zhuExpr,dirExpr))
 plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
-# make the two datasets have the same mean and variance by scaling the validation data (zhuExpr)
+# make the two datasets have the same mean and variance by scaling the validation data (zhuExpr) using scale function
+zhuExpr1 <- t(scale(t(zhuExpr),center=TRUE,scale=TRUE))
+dirExpr1 <- t(scale(t(dirExpr),center=TRUE,scale=TRUE))
+# describe the latent structure
+s <- svd(cbind(zhuExpr1,dirExpr1))
+plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
+
+
 # Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
 normalize_to_X <- function(mean.x, sd.x, Y){
   m.y <- rowMeans(Y)
@@ -82,10 +87,10 @@ normalize_to_X <- function(mean.x, sd.x, Y){
   Y.adj
 }
 
-zhuExpr <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
+zhuExpr2 <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
 
 # describe the latent structure
-s <- svd(cbind(zhuExpr,dirExpr))
+s <- svd(cbind(zhuExpr2,dirExpr))
 plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 ####################################################################################################################################

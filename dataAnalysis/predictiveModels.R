@@ -71,12 +71,13 @@ stripchart(yhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=
 
 # attempt to build a more robust classifier( bootstrapping)
 fun <- function(x){
-N <- sample(colnames(dirExpr),274,replace=TRUE)
+  print("X")
+  N <- sample(colnames(dirExpr),274,replace=TRUE)
 try.cv.fit <- cv.glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), nfolds=10, alpha=.1, family="binomial", penalty.factor=pen)
 tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), family="binomial", alpha=.1, lambda=try.cv.fit$lambda.min, penalty.factor=pen)$beta
 }
 
-try <- replicate(n=100,fun(x=x))
+try <- replicate(n=50,fun(x=x))
 tmp <- table(unlist(lapply(c(1:length(try)),function(x){which(abs(try[[x]])>0)})))
 select_features <- as.numeric(names(which(tmp>=quantile(tmp,probs=.99))))
 
@@ -84,20 +85,12 @@ w <- as.data.frame(t(x[select_features,]))
 w$os3yr <- dirClin$os3yr
 
 # run the logit model on the top selected features
-newlogitfit <- glm(w$os3yr~. ,data = w, family = "binomial")
+boostEnetfit <- glm(w$os3yr~. ,data = w, family = "binomial")
+rm(w)
 
-newyhatlogit <- predict(object=newlogitfit, newdata=as.data.frame(t(z)), type="response")
-boxplot(newyhatlogit ~ zhuClin$os3yr, ylab="prediction of 3-year OS probability (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
-stripchart(newyhatlogit ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
-
-# run a new Enet model
-newpen <- rep(1,times=4448)
-newpen[select_features] <- 0
-newfitEnet <- glmnet(x=t(x), y=factor(dirClin$os3yr), family="binomial", alpha=.1, lambda=cv.fit$lambda.min, penalty.factor=newpen)
-
-newyhatEnet <- predict(newfitEnet, t(z), type="response", s="lambda.min")
-boxplot(newyhatEnet ~ zhuClin$os3yr, ylab="prediction of 3-year OS probability (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
-stripchart(newyhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
+yhatboostEnet <- predict(object=boostEnetfit, newdata=as.data.frame(t(z)), type="response")
+boxplot(yhatboostEnet ~ zhuClin$os3yr, ylab="prediction of 3-year OS probability (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
+stripchart(yhatboostEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
