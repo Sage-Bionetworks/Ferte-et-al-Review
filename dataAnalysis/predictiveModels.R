@@ -92,6 +92,8 @@ yhatboostEnet <- predict(object=boostEnetfit, newdata=as.data.frame(t(z)), type=
 boxplot(yhatboostEnet ~ zhuClin$os3yr, ylab="prediction of 3-year OS probability (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhatboostEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
+# run a bootstraped ridge model on the top features selected by boost
+
 ######################################################################################################################################
 # 4. build the model based on clin + molecular features using RandomForest
 ######################################################################################################################################
@@ -109,6 +111,8 @@ stripchart(yhatRF ~ zhuClin$os3yr, pch=20, col="royalblue", vertical=TRUE, add=T
 ###################################################################################################################
 # 5. principal component regression
 ##############################################################################################################
+
+# make the formula Z~t(x) +pstage
 
 fitPcr <- pcr(dirClin$os3yr ~ t(x), ncomp=10,validation = "CV", family="binomial")
 yhatPcr <- predict(fitPcr, comps = 1:9,t(z), type="response")
@@ -131,8 +135,7 @@ stripchart(yhatPls ~ zhuClin$os3yr, pch=20, col="royalblue", vertical=TRUE, add=
 
 rocClin <- roc(predictor=as.numeric(yhatClin),response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocEnet <- roc(predictor=as.numeric(yhatEnet), response=as.numeric(zhuClin$os3yr),ci=TRUE)
-rocnewEnet1 <- roc(predictor=as.numeric(newyhatlogit), response=as.numeric(zhuClin$os3yr),ci=TRUE)
-rocnewEnet2 <- roc(predictor=as.numeric(newyhatEnet), response=as.numeric(zhuClin$os3yr),ci=TRUE)
+rocnewEnet1 <- roc(predictor=as.numeric(yhatboostEnet), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocRF <- roc(predictor=as.numeric(yhatRF), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocPcr <- roc(predictor=as.numeric(yhatPcr), response=as.numeric(zhuClin$os3yr),ci=TRUE)
 rocPls <- roc(predictor=as.numeric(yhatPls), response=as.numeric(zhuClin$os3yr),ci=TRUE)
