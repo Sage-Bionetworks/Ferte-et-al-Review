@@ -24,7 +24,7 @@ synapseLogin()
 ###################################################################################
 # select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
 ###################################################################################
-dataset <- "Dir"
+dataset <- "Zhu"
 
 ###################################################################################
 # load the data from Synapse
@@ -86,6 +86,31 @@ tmp <- paste(dataset,"_frma",sep="") #put frma at the end of the names
 assign(tmp,frma(rawdata, summarize = "random_effect"))
 tmp1 <- paste(dataset,"_barcode",sep="")  #put barcode at the end of the names 
 assign(tmp1,barcode(get(tmp)))
+
+###################################################################################
+# perform supervised normalization using snm for Zhu and Dir
+###################################################################################
+
+# if Zhu is the dataset of choice, load the Zhu clinical data data from synapse
+zhuClin <- loadEntity('syn1438225')
+zhuClin <- zhuClin$objects$ZhuClinF
+
+# we know that GENDER and P_Stage are biological & study variables of interest 
+bio.var <- model.matrix(~ zhuClin$GENDER + zhuClin$P_Stage)
+# SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
+adj.var <- model.matrix(~ zhuClin$SCANBATCH )
+snm.fit <- snm(pm(rawdata), 
+               bio.var=bio.var, 
+               adj.var=adj.var, 
+               rm.adj=TRUE)
+
+new.expr <- snm.fit$norm.dat
+colnames(new.expr) <- sampleNames(rawdata)
+rownames(new.expr) <- rownames(pm(rawdata))
+
+
+tmp <- paste(dataset,"_snm",sep="") #put SNM at the end of the names
+assign(tmp,new.expr)
 
 ###################################################################################
 # save the data in Synapse
@@ -157,4 +182,16 @@ assign(tmp1,barcode(get(tmp)))
 
 # push the raw data into this entity
 #dir_barcode <- storeEntity(entity=dir_barcode)
+
+#############################################################################################
+
+#dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
+#dir_barcode <- createEntity(dir_barcode)
+
+# add object into the data entity
+#dir_barcode <- addObject(dir_barcode,Dir_barcode)
+
+# push the raw data into this entity
+#dir_barcode <- storeEntity(entity=dir_barcode)
 #
+

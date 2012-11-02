@@ -2,10 +2,10 @@
 # 10/11/2012
 # Sage Bionetworks
 
-###################################################################################
+################################################################################################
 # supervisedNormDirZhu.R
 # code for supervised normalization of the Director's dataset (TS) and the Zhu dataset (VS)
-###################################################################################
+################################################################################################
 
 # load the packages that are neeeded
 require(synapseClient)
@@ -55,16 +55,22 @@ controlProbes <- grep("AFFX",rownames(zhuExpr))
 zhuExpr <- zhuExpr[-controlProbes, ]
 dirExpr <- dirExpr[rownames(zhuExpr), ]
 
+# describe the latent structure
+s <- svd(cbind(zhuExpr,dirExpr))
+plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
+
 # quantile normalize zhu to have the same disribution than dir (make them comparable)
-zhuExpr <- normalize2Reference(zhuExpr, rowMeans(dirExpr))
+#zhuExpr <- normalize2Reference(zhuExpr, rowMeans(dirExpr))
 
 # focus on the most variant probes
-probVarZhu  <- apply(zhuExpr, 1, var)
 probVarDir <- apply(dirExpr, 1, var)
-meanProbVar <- apply(cbind(probVarZhu, probVarDir), 1, mean)
-top20pct <- which(meanProbVar > quantile(meanProbVar, probs=.8))
+top20pct <- which(probVarDir > quantile(probVarDir, probs=.8))
 dirExpr <- dirExpr[top20pct, ]
 zhuExpr <- zhuExpr[top20pct, ]
+
+# describe the latent structure
+s <- svd(cbind(zhuExpr,dirExpr))
+plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 # make the two datasets have the same mean and variance by scaling the validation data (zhuExpr)
 # Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
@@ -78,6 +84,9 @@ normalize_to_X <- function(mean.x, sd.x, Y){
 
 zhuExpr <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
 
+# describe the latent structure
+s <- svd(cbind(zhuExpr,dirExpr))
+plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 ####################################################################################################################################
 # supervised normalization using snm adjusting for the inter-study batch, the intra batch, the histology, the stage and the gender
@@ -93,7 +102,7 @@ dirraw <- loadEntity('syn1422422')
 filepath <- c(zhuraw$cacheDir,dirraw$cacheDir)
 filenames <- list.celfiles(path=filepath,full.names=TRUE)
 expr <- ReadAffy(filenames=filenames)
-expr <- pm(expr)
+#expr <- pm(expr)
 
 # load the clinical data of dir and zhu
 zhuclin <- loadEntity('syn1438225')
@@ -108,7 +117,8 @@ vec <- ifelse(substr(allclin$SCANBATCH,1,3)=="Dir",1,2)
 
 s <- svd(expr)
 plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
-
+plot(s$v[,3],s$v[,4],col=c("royalblue","red")[vec],pch=20)
+plot(s$v[,5],s$v[,6],col=c("royalblue","red")[vec],pch=20)
 
 bio.var <- model.matrix(~ allclin$GENDER + allclin$P_Stage)
 adj.var <- model.matrix(~ allclin$SCANBATCH )
@@ -128,9 +138,9 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 
 ## PUSH INTERMEDIATE OBJECT TO SYNAPSE
-#supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
-#supNormEnt <- addObject(supNormEnt, zhuExpr)
-#supNormEnt <- addObject(supNormEnt, dirExpr)
-#supNormEnt <- addObject(supNormEnt, zhuClin)
-#supNormEnt <- addObject(supNormEnt, dirClin)
-#supNormEnt <- storeEntity(supNormEnt)
+supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
+supNormEnt <- addObject(supNormEnt, zhuExpr)
+supNormEnt <- addObject(supNormEnt, dirExpr)
+supNormEnt <- addObject(supNormEnt, zhuClin)
+supNormEnt <- addObject(supNormEnt, dirClin)
+supNormEnt <- storeEntity(supNormEnt)

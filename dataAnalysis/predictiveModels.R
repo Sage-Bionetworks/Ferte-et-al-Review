@@ -33,7 +33,7 @@ zhuClin <- supNormEnt$objects$zhuClin
 zhuExpr <- supNormEnt$objects$zhuExpr
 
 ######################################################################################################################################
-# 2. build a model of os3yr based on P_Stage only (logisitic regression)
+# 2. build a model of os3yr based on P_Stage only since this is the current clinical standard (logisitic regression)
 ######################################################################################################################################
 
 fitClin <- glm(os3yr ~ P_Stage, data = dirClin, family = "binomial")
@@ -76,7 +76,7 @@ try.cv.fit <- cv.glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), nfolds=10, alp
 tryfit <- glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), family="binomial", alpha=.1, lambda=try.cv.fit$lambda.min, penalty.factor=pen)$beta
 }
 
-try <- replicate(n=1000,fun(x=x))
+try <- replicate(n=100,fun(x=x))
 tmp <- table(unlist(lapply(c(1:length(try)),function(x){which(abs(try[[x]])>0)})))
 select_features <- as.numeric(names(which(tmp>=quantile(tmp,probs=.99))))
 
