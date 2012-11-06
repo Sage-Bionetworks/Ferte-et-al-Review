@@ -102,8 +102,8 @@ require(affy)
 # load the raw data from dir and zhu
 # the steps are identical to unsupervisedNorm.R
 
-zhuraw <- loadEntity('syn1439020') 
-dirraw <- loadEntity('syn1422422')
+zhuraw <- loadEntity('syn1439020')  #CEL files from Zhu et al
+dirraw <- loadEntity('syn1422422')  #CEL Files from Directors Challenge
 filepath <- c(zhuraw$cacheDir,dirraw$cacheDir)
 filenames <- list.celfiles(path=filepath,full.names=TRUE)
 expr <- ReadAffy(filenames=filenames)
@@ -141,11 +141,18 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 ####################################################################################################################################
 
+###################################################################################
+# save the data in Synapse
+#
+# Saving steps for initial entities back to Synapse.  
+# The ids will be accessible in the remainder of the code.
+# all of this code is commented out to ensure that there is no change to the entities
+# that already exist.
+###################################################################################
 
-## PUSH INTERMEDIATE OBJECT TO SYNAPSE
-supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
-supNormEnt <- addObject(supNormEnt, zhuExpr)
-supNormEnt <- addObject(supNormEnt, dirExpr)
-supNormEnt <- addObject(supNormEnt, zhuClin)
-supNormEnt <- addObject(supNormEnt, dirClin)
-supNormEnt <- storeEntity(supNormEnt)
+#supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
+#supNormEnt <- addObject(supNormEnt, zhuExpr)
+#supNormEnt <- addObject(supNormEnt, dirExpr)
+#supNormEnt <- addObject(supNormEnt, zhuClin)
+#supNormEnt <- addObject(supNormEnt, dirClin)
+#supNormEnt <- storeEntity(supNormEnt)
