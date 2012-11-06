@@ -149,6 +149,13 @@ plot.roc(rocPcr,add=TRUE,col="darkgreen")
 plot.roc(rocPls,add=TRUE,col="black")
 plot.roc(rocBoostEnet,add=TRUE,col="green")
 
+plot.roc(rocClin,col="royalblue", main="logit (clinical features only)")
+plot.roc(rocEnet,col="red", main="Elastic Net (clinical + molecular features)")
+plot.roc(rocRF,col="orange", main="Random Forest (clinical + molecular features)")
+plot.roc(rocPcr,col="darkgreen", main="Principal Component Regression (clinical + molecular features)")
+plot.roc(rocPls,col="black", main="Partial Least Square (clinical + molecular features)")
+plot.roc(rocBoostEnet,col="green", main="Bootstrap Elastic Net (clinical + molecular features)")
+
 #concatenate AUC + 95CI 
 txtClin <- paste("Logit Clin. AUC =",format(x=rocClin$auc, digits=2),", 95% CI:",format(x=as.numeric(rocClin$ci)[1],digits=2),"-",format(x=as.numeric(rocClin$ci)[3],digits=2))
 txtEnet <- paste("Elastic Net AUC =",format(x=rocEnet$auc, digits=2),", 95% CI:",format(x=as.numeric(rocEnet$ci)[1],digits=2),"-",format(x=as.numeric(rocEnet$ci)[3],digits=2))
@@ -187,29 +194,29 @@ names(riskPls) <- rownames(yhatPls)
 # for each model, draw the kaplan meir curves and compute the log rank test
 par(mfrow=c(1,1))
 
-plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskClin), main="logit model", xlab="months",ylab="probability of OS",col= c("blue","magenta"), lwd=3)
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskClin, rho=0)
-abline(v=36,col="red",lty=2)
+abline(v=36,col="red",lty=2,lwd=3)
 
-plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"),lwd=3)
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet, rho=0)
-abline(v=36,col="red",lty=2)
+abline(v=36,col="red",lty=2,lwd=3)
 
-plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskboostEnet), main=" Bootstrap elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskboostEnet), main=" Bootstrap elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"),lwd=3)
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskboostEnet, rho=0)
-abline(v=36,col="red",lty=2)
+abline(v=36,col="red",lty=2,lwd=3)
 
-plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of OS",col= c("blue","magenta"),lwd=3)
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskRF, rho=0)
-abline(v=36,col="red",lty=2)
+abline(v=36,col="red",lty=2,lwd=3)
 
-plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPcr), main="Prin. Comp. Regression model", xlab="months",ylab="probability of OS",col= c("blue","magenta"),lwd=3)
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPcr, rho=0)
-abline(v=36,col="red",lty=2)
+abline(v=36,col="red",lty=2,lwd=3)
 
-plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPls), main="Partial least square model", xlab="months",ylab="probability of OS",col= c("blue","magenta"),lwd=3)
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskPls, rho=0)
-abline(v=36,col="red",lty=2)
+abline(v=36,col="red",lty=2,lwd=3)
 
 ######################################################################################################################################
 # 9. draw the heatmaps based on the predictors (high and low risk groups based on the median)
@@ -250,4 +257,6 @@ heatmap.2(x=z[features_Pls,names(riskPls1)],trace="none",
           ColSideColors=c("blue","magenta")[riskPls1+1],
           col=greenred(50),scale="row",
           breaks=seq(-2.5,2.5,len=51),Colv=TRUE, main="Partial Least Square")
+
+
 
