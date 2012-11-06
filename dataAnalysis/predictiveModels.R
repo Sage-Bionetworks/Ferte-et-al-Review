@@ -176,11 +176,14 @@ text(x=.65, y=.3, labels=paste(txtBoostEnet), col="green", adj=0)
 riskClin <- ifelse(yhatClin >= median(yhatClin), 1, 0)
 riskEnet <- as.vector(ifelse(yhatEnet >= median(yhatEnet), 1, 0))
 names(riskEnet) <- rownames(yhatEnet)
+riskboostEnet <- as.vector(ifelse(yhatboostEnet >= median(yhatboostEnet), 1, 0))
+names(riskboostEnet) <- names(yhatboostEnet)
 riskRF <- ifelse(yhatRF >= median(yhatRF), 1, 0)
 riskPcr <- as.vector(ifelse(yhatPcr >= median(yhatPcr), 1, 0))
 names(riskPcr) <- rownames(yhatPcr)
 riskPls <- as.vector(ifelse(yhatPls >= median(yhatPls), 1, 0))
 names(riskPls) <- rownames(yhatPls)
+
 # for each model, draw the kaplan meir curves and compute the log rank test
 par(mfrow=c(1,1))
 
@@ -190,6 +193,10 @@ abline(v=36,col="red",lty=2)
 
 plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet), main="elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
 survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskEnet, rho=0)
+abline(v=36,col="red",lty=2)
+
+plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskboostEnet), main=" Bootstrap elastic net model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
+survdiff(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskboostEnet, rho=0)
 abline(v=36,col="red",lty=2)
 
 plot(survfit(Surv(zhuClin$MONTHS_TO_LAST_CONTACT_OR_DEATH,zhuClin$VITAL_STATUS) ~ riskRF), main="random forest model", xlab="months",ylab="probability of OS",col= c("blue","magenta"))
@@ -215,6 +222,13 @@ heatmap.2(x=z[which(abs(fitEnet$beta)>0),names(riskEnet1)],
           col=greenred(50),scale="row", 
           breaks = seq(-2.5, 2.5, len = 51),
           Colv=TRUE,main="Elastic Net")
+
+riskboostEnet1 <- sort(riskboostEnet)
+heatmap.2(x=z[which(abs(boostEnetfit$coefficients)>0),names(riskboostEnet1)],
+          trace="none",ColSideColors=c("blue","magenta")[riskboostEnet1+1],
+          col=greenred(50),scale="row", 
+          breaks = seq(-2.5, 2.5, len = 51),
+          Colv=TRUE,main="Bootstrap Elastic Net")
 
 riskRF1 <- sort(riskRF)
 heatmap.2(x=z[which(abs(importance(fitRF,type=1))>.18),
