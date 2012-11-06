@@ -4,7 +4,7 @@
 
 ###################################################################################
 # Norm.R
-# perform various unsupervised normalization methods on the different data
+# perform various unsupervised and supervised normalization methods on the different data
 ###################################################################################
 
 ##################################################################################
@@ -24,7 +24,7 @@ synapseLogin()
 ###################################################################################
 # select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
 ###################################################################################
-dataset <- "Zhu"
+dataset <- "Dir"
 
 ###################################################################################
 # load the data from Synapse
@@ -92,23 +92,23 @@ assign(tmp1,barcode(get(tmp)))
 ###################################################################################
 
 # if Zhu is the dataset of choice, load the Zhu clinical data data from synapse
-zhuClin <- loadEntity('syn1438225')
-zhuClin <- zhuClin$objects$ZhuClinF
+dirClin <- loadEntity('syn1438222')
+dirClin <- dirClin$objects$DirClinF
 
 # we know that GENDER and P_Stage are biological & study variables of interest 
-bio.var <- model.matrix(~ zhuClin$GENDER + zhuClin$P_Stage)
+bio.var <- model.matrix(~ dirClin$GENDER + dirClin$P_Stage)
 
 # SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
-adj.var <- model.matrix(~ zhuClin$SCANBATCH )
-snm.fit <- snm(pm(rawdata), 
+adj.var <- model.matrix(~ dirClin$SCANBATCH )
+myobject <- log2(pm(rawdata))
+snm.fit <- snm(myobject, 
                bio.var=bio.var, 
                adj.var=adj.var, 
                rm.adj=TRUE)
-
 new.expr <- snm.fit$norm.dat
-colnames(new.expr) <- sampleNames(rawdata)
-rownames(new.expr) <- rownames(pm(rawdata))
-
+pm(rawdata) <- 2^new.expr
+myNormSummarized <- rma(rawdata, background=F, normalize=F)
+dim(myNormSummarized)
 
 tmp <- paste(dataset,"_snm",sep="") #put SNM at the end of the names
 assign(tmp,new.expr)
@@ -186,13 +186,13 @@ assign(tmp,new.expr)
 
 #############################################################################################
 
-#dir_snm <- Data(list(name = "dir_snm", parentId = 'syn87682'))
-#dir_snm <- createEntity(dir_snm)
+dir_snm <- Data(list(name = "dir_snm", parentId = 'syn87682'))
+dir_snm <- createEntity(dir_snm)
 
 # add object into the data entity
-#dir_snm <- addObject(dir_snm,Dir_snm)
+dir_snm <- addObject(zhu_snm,Dir_snm)
 
 # push the raw data into this entity
-#dir_snm <- storeEntity(entity=dir_snm)
-#
+dir_snm <- storeEntity(entity=dir_snm)
+
 
