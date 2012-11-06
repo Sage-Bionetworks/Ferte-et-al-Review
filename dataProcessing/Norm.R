@@ -22,9 +22,9 @@ require(synapseClient)
 synapseLogin()
 
 ###################################################################################
-# select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
+# select dataset among Dir,Zhu, Hou, Lusc 
 ###################################################################################
-dataset <- "Dir"
+dataset <- "Hou"
 
 ###################################################################################
 # load the data from Synapse
@@ -49,10 +49,6 @@ Lusc_CEL <- Lusc$cacheDir
 datapath1  <-get(paste(dataset,"_CEL",sep=""))
 setwd(datapath1)
 rawdata <- ReadAffy(filenames=list.celfiles(datapath1))
-
-# read the HGU133A
-#lol <- c(list.files(Dir_CEL,full.names=TRUE),list.files(Zhu_CEL,full.names=TRUE))
-#rawdata <- ReadAffy(filenames=as.character(lol))
 
 
 ###################################################################################
@@ -92,14 +88,14 @@ assign(tmp1,barcode(get(tmp)))
 ###################################################################################
 
 # if Zhu is the dataset of choice, load the Zhu clinical data data from synapse
-dirClin <- loadEntity('syn1438222')
-dirClin <- dirClin$objects$DirClinF
+houClin <- loadEntity('syn1438227')
+houClin <- houClin$objects$HouClinF
 
 # we know that GENDER and P_Stage are biological & study variables of interest 
-bio.var <- model.matrix(~ dirClin$GENDER + dirClin$P_Stage)
+bio.var <- model.matrix(~ houClin$GENDER + houClin$P_Stage + houClin$Histology)
 
 # SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
-adj.var <- model.matrix(~ dirClin$SCANBATCH )
+adj.var <- model.matrix(~ houClin$SCANBATCH )
 myobject <- log2(pm(rawdata))
 snm.fit <- snm(myobject, 
                bio.var=bio.var, 
@@ -109,9 +105,8 @@ new.expr <- snm.fit$norm.dat
 pm(rawdata) <- 2^new.expr
 myNormSummarized <- rma(rawdata, background=F, normalize=F)
 dim(myNormSummarized)
-
 tmp <- paste(dataset,"_snm",sep="") #put SNM at the end of the names
-assign(tmp,new.expr)
+assign(tmp,myNormSummarized)
 
 ###################################################################################
 # save the data in Synapse
