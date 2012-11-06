@@ -149,13 +149,6 @@ plot.roc(rocPcr,add=TRUE,col="darkgreen")
 plot.roc(rocPls,add=TRUE,col="black")
 plot.roc(rocBoostEnet,add=TRUE,col="green")
 
-plot.roc(rocClin,col="royalblue", main="logit (clinical features only)")
-plot.roc(rocEnet,col="red", main="Elastic Net (clinical + molecular features)")
-plot.roc(rocRF,col="orange", main="Random Forest (clinical + molecular features)")
-plot.roc(rocPcr,col="darkgreen", main="Principal Component Regression (clinical + molecular features)")
-plot.roc(rocPls,col="black", main="Partial Least Square (clinical + molecular features)")
-plot.roc(rocBoostEnet,col="green", main="Bootstrap Elastic Net (clinical + molecular features)")
-
 #concatenate AUC + 95CI 
 txtClin <- paste("Logit Clin. AUC =",format(x=rocClin$auc, digits=2),", 95% CI:",format(x=as.numeric(rocClin$ci)[1],digits=2),"-",format(x=as.numeric(rocClin$ci)[3],digits=2))
 txtEnet <- paste("Elastic Net AUC =",format(x=rocEnet$auc, digits=2),", 95% CI:",format(x=as.numeric(rocEnet$ci)[1],digits=2),"-",format(x=as.numeric(rocEnet$ci)[3],digits=2))
@@ -172,6 +165,16 @@ text(x=.65, y=.15, labels=paste(txtRF), col="orange", adj=0)
 text(x=.65, y=.1, labels=paste(txtPcr), col="darkgreen", adj=0)
 text(x=.65, y=.05, labels=paste(txtPls), col="black", adj=0)
 text(x=.65, y=.3, labels=paste(txtBoostEnet), col="green", adj=0)
+
+
+# plot the roc curves separately
+plot.roc(rocClin,col="royalblue", main="logit (clinical features only)")
+plot.roc(rocEnet,col="red", main="Elastic Net (clinical + molecular features)")
+plot.roc(rocRF,col="orange", main="Random Forest (clinical + molecular features)")
+plot.roc(rocPcr,col="darkgreen", main="Principal Component Regression (clinical + molecular features)")
+plot.roc(rocPls,col="black", main="Partial Least Square (clinical + molecular features)")
+plot.roc(rocBoostEnet,col="green", main="Bootstrap Elastic Net (clinical + molecular features)")
+
 
 ######################################################################################################################################
 # 8. draw the kaplan meier curves based on the predictors (high and low risk groups based on the median)
