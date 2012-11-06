@@ -3,7 +3,7 @@
 # Sage Bionetworks
 
 ###################################################################################
-# unsupervisedNorm.R
+# Norm.R
 # perform various unsupervised normalization methods on the different data
 ###################################################################################
 
@@ -88,7 +88,7 @@ tmp1 <- paste(dataset,"_barcode",sep="")  #put barcode at the end of the names
 assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
-# perform supervised normalization using snm for Zhu and Dir
+# perform supervised normalization using snm
 ###################################################################################
 
 # if Zhu is the dataset of choice, load the Zhu clinical data data from synapse
@@ -97,6 +97,7 @@ zhuClin <- zhuClin$objects$ZhuClinF
 
 # we know that GENDER and P_Stage are biological & study variables of interest 
 bio.var <- model.matrix(~ zhuClin$GENDER + zhuClin$P_Stage)
+
 # SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
 adj.var <- model.matrix(~ zhuClin$SCANBATCH )
 snm.fit <- snm(pm(rawdata), 
