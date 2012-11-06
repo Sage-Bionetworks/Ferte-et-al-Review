@@ -19,7 +19,7 @@ require(gplots)
 
 set.seed(12221981)
 
-synapseLogin("charles.ferte@sagebase.org","charles")
+synapseLogin()
 
 ######################################################################################################################################
 # 1. load the preprocessed datasets zhu and dir
@@ -165,7 +165,6 @@ text(x=.65, y=.15, labels=paste(txtRF), col="orange", adj=0)
 text(x=.65, y=.1, labels=paste(txtPcr), col="darkgreen", adj=0)
 text(x=.65, y=.05, labels=paste(txtPls), col="black", adj=0)
 text(x=.65, y=.3, labels=paste(txtBoostEnet), col="green", adj=0)
-
 
 # plot the roc curves separately
 plot.roc(rocClin,col="royalblue", main="logit (clinical features only)")
