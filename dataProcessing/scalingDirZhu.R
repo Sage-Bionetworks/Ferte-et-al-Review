@@ -3,7 +3,7 @@
 # Sage Bionetworks
 
 ################################################################################################
-# supervisedNormDirZhu.R
+# scalingDirZhu.R
 # code for supervised normalization of the Director's dataset (TS) and the Zhu dataset (VS)
 ################################################################################################
 
@@ -79,67 +79,20 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 
 # Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
-normalize_to_X <- function(mean.x, sd.x, Y){
-  m.y <- rowMeans(Y)
-  sd.y <- apply(Y, 1, sd)
-  Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
-  Y.adj[sd.y == 0] <- mean.x[sd.y==0]
-  Y.adj
-}
+#normalize_to_X <- function(mean.x, sd.x, Y){
+#  m.y <- rowMeans(Y)
+#  sd.y <- apply(Y, 1, sd)
+#  Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
+#  Y.adj[sd.y == 0] <- mean.x[sd.y==0]
+#  Y.adj
+#}
 
-zhuExpr2 <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
+#zhuExpr2 <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
 
 # describe the latent structure
-s <- svd(cbind(zhuExpr2,dirExpr))
-plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
+#s <- svd(cbind(zhuExpr2,dirExpr))
+#plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
-####################################################################################################################################
-# supervised normalization using snm adjusting for the inter-study batch, the intra batch, the histology, the stage and the gender
-####################################################################################################################################
-require(snm)
-require(affy)
-
-# load the raw data from dir and zhu
-# the steps are identical to unsupervisedNorm.R
-
-zhuraw <- loadEntity('syn1439020')  #CEL files from Zhu et al
-dirraw <- loadEntity('syn1422422')  #CEL Files from Directors Challenge
-filepath <- c(zhuraw$cacheDir,dirraw$cacheDir)
-filenames <- list.celfiles(path=filepath,full.names=TRUE)
-expr <- ReadAffy(filenames=filenames)
-#expr <- pm(expr)
-
-# load the clinical data of dir and zhu
-zhuclin <- loadEntity('syn1438225')
-zhuclin <- zhuclin$objects$ZhuClinF
-dirclin <- loadEntity('syn1438222')
-dirclin <- dirclin$objects$DirClinF
-allclin <- rbind(zhuclin,dirclin)
-
-## compute the new data normalized 
-# corrected for the SCANBATCH (batches determined by C.F according to the CEL file date of production and by the sudy status dir or zhu) 
-vec <- ifelse(substr(allclin$SCANBATCH,1,3)=="Dir",1,2)
-
-s <- svd(expr)
-plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
-plot(s$v[,3],s$v[,4],col=c("royalblue","red")[vec],pch=20)
-plot(s$v[,5],s$v[,6],col=c("royalblue","red")[vec],pch=20)
-
-bio.var <- model.matrix(~ allclin$GENDER + allclin$P_Stage)
-adj.var <- model.matrix(~ allclin$SCANBATCH )
-snm.fit <- snm(expr, 
-               bio.var=bio.var, 
-               adj.var=adj.var, 
-               rm.adj=TRUE)
-
-new.expr <- snm.fit$norm.dat
-colnames(new.expr) <- colnames(expr)
-rownames(new.expr) <- rownames(expr)
-
-s <- svd(new.expr)
-plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
-
-####################################################################################################################################
 
 ###################################################################################
 # save the data in Synapse
