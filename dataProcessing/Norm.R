@@ -85,12 +85,10 @@ tmp <- paste(dataset,"_MAS5",sep="") #put MAS5 at the end of the names
 assign(tmp,mas5(rawdata))
 
 ###################################################################################
-# perform fRMA and then Barcode normalization
+# perform fRMA normalization
 ###################################################################################
 tmp <- paste(dataset,"_frma",sep="") #put frma at the end of the names
 assign(tmp,frma(rawdata, summarize = "random_effect"))
-tmp1 <- paste(dataset,"_barcode",sep="")  #put barcode at the end of the names 
-assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
 # perform supervised normalization using snm (and rma summarization)
