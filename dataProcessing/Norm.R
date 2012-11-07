@@ -93,7 +93,7 @@ tmp1 <- paste(dataset,"_barcode",sep="")  #put barcode at the end of the names
 assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
-# perform supervised normalization using snm
+# perform supervised normalization using snm (and rma summarization)
 ###################################################################################
 
 # we know that GENDER and P_Stage are biological & study variables of interest 
@@ -124,63 +124,63 @@ assign(tmp,myNormSummarized)
 #require(synapseClient)
 #synapseLogin()
 #
-#dir_rma <- Data(list(name = "dir rma", parentId = 'syn87682'))
-#dir_rma <- createEntity(dir_rma)
+#lusc_rma <- Data(list(name = "dir rma", parentId = 'syn87682'))
+#lusc_rma <- createEntity(lusc_rma)
 
 # add object into the data entity
-#dir_rma <- addObject(dir_rma,Dir_rma)
+#lusc_rma <- addObject(lusc_rma,lusc_rma)
 
 # push the raw data into this entity
-#dir_rma <- storeEntity(entity=dir_rma)
+#lusc_rma <- storeEntity(entity=lusc_rma)
 
 #############################################################################################
-#dir_gcrma <- Data(list(name = "dir gcrma", parentId = 'syn87682'))
-#dir_gcrma <- createEntity(dir_gcrma)
+#lusc_gcrma <- Data(list(name = "dir gcrma", parentId = 'syn87682'))
+#lusc_gcrma <- createEntity(lusc_gcrma)
 
 # add object into the data entity
-#dir_gcrma <- addObject(dir_gcrma,Dir_gcrma)
+#lusc_gcrma <- addObject(lusc_gcrma,lusc_gcrma)
 
 # push the raw data into this entity
-#dir_gcrma <- storeEntity(entity=dir_gcrma)
+#lusc_gcrma <- storeEntity(entity=lusc_gcrma)
 #############################################################################################
 
 
-#dir_MAS5 <- Data(list(name = "dir MAS5", parentId = 'syn87682'))
-#dir_MAS5 <- createEntity(dir_MAS5)
+#lusc_MAS5 <- Data(list(name = "dir MAS5", parentId = 'syn87682'))
+#lusc_MAS5 <- createEntity(lusc_MAS5)
 
 # add object into the data entity
-#dir_MAS5 <- addObject(dir_MAS5,Dir_MAS5)
+#lusc_MAS5 <- addObject(lusc_MAS5,lusc_MAS5)
 
 # push the raw data into this entity
-#dir_MAS5 <- storeEntity(entity=dir_MAS5)
+#lusc_MAS5 <- storeEntity(entity=lusc_MAS5)
 #############################################################################################
-#dir_dCHIP <- Data(list(name = "dir dCHIP", parentId = 'syn87682'))
-#dir_dCHIP <- createEntity(dir_dCHIP)
+#lusc_dCHIP <- Data(list(name = "dir dCHIP", parentId = 'syn87682'))
+#lusc_dCHIP <- createEntity(lusc_dCHIP)
 
 # add object into the data entity
-#dir_dCHIP <- addObject(dir_dCHIP,Dir_dCHIP)
+#lusc_dCHIP <- addObject(lusc_dCHIP,lusc_dCHIP)
 
 # push the raw data into this entity
-#dir_dCHIP <- storeEntity(entity=dir_dCHIP)
+#lusc_dCHIP <- storeEntity(entity=lusc_dCHIP)
 #############################################################################################
 
-#dir_frma <- Data(list(name = "dir frma", parentId = 'syn87682'))
-#dir_frma <- createEntity(dir_frma)
+#lusc_frma <- Data(list(name = "dir frma", parentId = 'syn87682'))
+#lusc_frma <- createEntity(lusc_frma)
 
 # add object into the data entity
-#dir_frma <- addObject(dir_frma,Dir_frma)
+#lusc_frma <- addObject(lusc_frma,lusc_frma)
 
 # push the raw data into this entity
-#dir_frma <- storeEntity(entity=dir_frma)
+#lusc_frma <- storeEntity(entity=lusc_frma)
 
 #############################################################################################
-# hou_snm <- Data(list(name = "hou_snm", parentId = 'syn87682'))
-# hou_snm <- createEntity(hou_snm)
+# lusc_snm <- Data(list(name = "lusc_snm", parentId = 'syn87682'))
+# lusc_snm <- createEntity(lusc_snm)
 # 
 # # add object into the data entity
-# hou_snm <- addObject(hou_snm,Hou_snm)
+# lusc_snm <- addObject(lusc_snm,Lusc_snm)
 # 
 # # push the raw data into this entity
-# hou_snm <- storeEntity(entity=hou_snm)
+# lusc_snm <- storeEntity(entity=lusc_snm)
 
 
