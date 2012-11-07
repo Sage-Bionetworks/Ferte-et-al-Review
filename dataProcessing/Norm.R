@@ -24,7 +24,7 @@ synapseLogin()
 ###################################################################################
 # select dataset among Dir,Zhu, Hou, Lusc 
 ###################################################################################
-dataset <- "Hou"
+dataset <- "Lusc"
 
 ###################################################################################
 # load the data from Synapse
@@ -50,6 +50,15 @@ datapath1  <-get(paste(dataset,"_CEL",sep=""))
 setwd(datapath1)
 rawdata <- ReadAffy(filenames=list.celfiles(datapath1))
 
+##################################################################################
+# make the sample Names coherent with the samples clinically curated
+##################################################################################
+# load the clinical data data from synapse
+luscClin <- loadEntity('syn1438233')
+luscClin <- luscClin$objects$LuscClinF
+
+tmp <- intersect(sampleNames(rawdata), rownames(luscClin))
+rawdata <- rawdata[,tmp]
 
 ###################################################################################
 # perform rma normalization
@@ -87,15 +96,11 @@ assign(tmp1,barcode(get(tmp)))
 # perform supervised normalization using snm
 ###################################################################################
 
-# if Zhu is the dataset of choice, load the Zhu clinical data data from synapse
-houClin <- loadEntity('syn1438227')
-houClin <- houClin$objects$HouClinF
-
 # we know that GENDER and P_Stage are biological & study variables of interest 
-bio.var <- model.matrix(~ houClin$GENDER + houClin$P_Stage + houClin$Histology)
+bio.var <- model.matrix(~ luscClin$GENDER + luscClin$P_Stage)
 
 # SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
-adj.var <- model.matrix(~ houClin$SCANBATCH )
+adj.var <- model.matrix(~ luscClin$SITE )
 myobject <- log2(pm(rawdata))
 snm.fit <- snm(myobject, 
                bio.var=bio.var, 
@@ -169,25 +174,13 @@ assign(tmp,myNormSummarized)
 #dir_frma <- storeEntity(entity=dir_frma)
 
 #############################################################################################
-
-#dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
-#dir_barcode <- createEntity(dir_barcode)
-
-# add object into the data entity
-#dir_barcode <- addObject(dir_barcode,Dir_barcode)
-
-# push the raw data into this entity
-#dir_barcode <- storeEntity(entity=dir_barcode)
-
-#############################################################################################
-
-dir_snm <- Data(list(name = "dir_snm", parentId = 'syn87682'))
-dir_snm <- createEntity(dir_snm)
-
-# add object into the data entity
-dir_snm <- addObject(zhu_snm,Dir_snm)
-
-# push the raw data into this entity
-dir_snm <- storeEntity(entity=dir_snm)
+# hou_snm <- Data(list(name = "hou_snm", parentId = 'syn87682'))
+# hou_snm <- createEntity(hou_snm)
+# 
+# # add object into the data entity
+# hou_snm <- addObject(hou_snm,Hou_snm)
+# 
+# # push the raw data into this entity
+# hou_snm <- storeEntity(entity=hou_snm)
 
 
