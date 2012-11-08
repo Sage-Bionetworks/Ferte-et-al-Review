@@ -22,9 +22,9 @@ require(synapseClient)
 synapseLogin()
 
 ###################################################################################
-# select dataset among Dir,Zhu, Hou, Lusc or HGU133A (aka combined Dir and Zhu HGU133A arrays)
+# select dataset among Dir,Zhu, Hou, Lusc 
 ###################################################################################
-dataset <- "Dir"
+dataset <- "Lusc"
 
 ###################################################################################
 # load the data from Synapse
@@ -50,10 +50,15 @@ datapath1  <-get(paste(dataset,"_CEL",sep=""))
 setwd(datapath1)
 rawdata <- ReadAffy(filenames=list.celfiles(datapath1))
 
-# read the HGU133A
-#lol <- c(list.files(Dir_CEL,full.names=TRUE),list.files(Zhu_CEL,full.names=TRUE))
-#rawdata <- ReadAffy(filenames=as.character(lol))
+##################################################################################
+# make the sample Names coherent with the samples clinically curated
+##################################################################################
+# load the clinical data data from synapse
+luscClin <- loadEntity('syn1438233')
+luscClin <- luscClin$objects$LuscClinF
 
+tmp <- intersect(sampleNames(rawdata), rownames(luscClin))
+rawdata <- rawdata[,tmp]
 
 ###################################################################################
 # perform rma normalization
@@ -80,26 +85,20 @@ tmp <- paste(dataset,"_MAS5",sep="") #put MAS5 at the end of the names
 assign(tmp,mas5(rawdata))
 
 ###################################################################################
-# perform fRMA and then Barcode normalization
+# perform fRMA normalization
 ###################################################################################
 tmp <- paste(dataset,"_frma",sep="") #put frma at the end of the names
 assign(tmp,frma(rawdata, summarize = "random_effect"))
-tmp1 <- paste(dataset,"_barcode",sep="")  #put barcode at the end of the names 
-assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
-# perform supervised normalization using snm
+# perform supervised normalization using snm (and rma summarization)
 ###################################################################################
-
-# if Zhu is the dataset of choice, load the Zhu clinical data data from synapse
-dirClin <- loadEntity('syn1438222')
-dirClin <- dirClin$objects$DirClinF
 
 # we know that GENDER and P_Stage are biological & study variables of interest 
-bio.var <- model.matrix(~ dirClin$GENDER + dirClin$P_Stage)
+bio.var <- model.matrix(~ luscClin$GENDER + luscClin$P_Stage)
 
 # SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
-adj.var <- model.matrix(~ dirClin$SCANBATCH )
+adj.var <- model.matrix(~ luscClin$SITE )
 myobject <- log2(pm(rawdata))
 snm.fit <- snm(myobject, 
                bio.var=bio.var, 
@@ -109,90 +108,81 @@ new.expr <- snm.fit$norm.dat
 pm(rawdata) <- 2^new.expr
 myNormSummarized <- rma(rawdata, background=F, normalize=F)
 dim(myNormSummarized)
-
 tmp <- paste(dataset,"_snm",sep="") #put SNM at the end of the names
-assign(tmp,new.expr)
+assign(tmp,myNormSummarized)
 
-###################################################################################
+##################################################################################
 # save the data in Synapse
-#
+# 
 # Saving steps for initial entities back to Synapse.  
 # The ids will be accessible in the remainder of the code.
 # all of this code is commented out to ensure that there is no change to the entities
 # that already exist.
-###################################################################################
-#require(synapseClient)
-#synapseLogin()
-#
-#dir_rma <- Data(list(name = "dir rma", parentId = 'syn87682'))
-#dir_rma <- createEntity(dir_rma)
+##################################################################################
+require(synapseClient)
+synapseLogin()
+
+lusc_rma <- Data(list(name = "lusc_rma", parentId = 'syn87682'))
+lusc_rma <- createEntity(lusc_rma)
 
 # add object into the data entity
-#dir_rma <- addObject(dir_rma,Dir_rma)
+lusc_rma <- addObject(lusc_rma,Lusc_rma)
 
 # push the raw data into this entity
-#dir_rma <- storeEntity(entity=dir_rma)
+lusc_rma <- storeEntity(entity=lusc_rma)
 
-#############################################################################################
-#dir_gcrma <- Data(list(name = "dir gcrma", parentId = 'syn87682'))
-#dir_gcrma <- createEntity(dir_gcrma)
+############################################################################################
+
+lusc_gcrma <- Data(list(name = "lusc_gcrma", parentId = 'syn87682'))
+lusc_gcrma <- createEntity(lusc_gcrma)
 
 # add object into the data entity
-#dir_gcrma <- addObject(dir_gcrma,Dir_gcrma)
+lusc_gcrma <- addObject(lusc_gcrma,Lusc_gcrma)
 
 # push the raw data into this entity
-#dir_gcrma <- storeEntity(entity=dir_gcrma)
-#############################################################################################
+lusc_gcrma <- storeEntity(entity=lusc_gcrma)
 
+############################################################################################
 
-#dir_MAS5 <- Data(list(name = "dir MAS5", parentId = 'syn87682'))
-#dir_MAS5 <- createEntity(dir_MAS5)
+lusc_MAS5 <- Data(list(name = "lusc_MAS5", parentId = 'syn87682'))
+lusc_MAS5 <- createEntity(lusc_MAS5)
+
+#add object into the data entity
+lusc_MAS5 <- addObject(lusc_MAS5,Lusc_MAS5)
+
+#push the raw data into this entity
+lusc_MAS5 <- storeEntity(entity=lusc_MAS5)
+
+############################################################################################
+
+lusc_dCHIP <- Data(list(name = "lusc_dCHIP", parentId = 'syn87682'))
+lusc_dCHIP <- createEntity(lusc_dCHIP)
 
 # add object into the data entity
-#dir_MAS5 <- addObject(dir_MAS5,Dir_MAS5)
+lusc_dCHIP <- addObject(lusc_dCHIP,Lusc_dCHIP)
 
 # push the raw data into this entity
-#dir_MAS5 <- storeEntity(entity=dir_MAS5)
-#############################################################################################
-#dir_dCHIP <- Data(list(name = "dir dCHIP", parentId = 'syn87682'))
-#dir_dCHIP <- createEntity(dir_dCHIP)
+lusc_dCHIP <- storeEntity(entity=lusc_dCHIP)
+
+############################################################################################
+
+lusc_frma <- Data(list(name = "lusc_frma", parentId = 'syn87682'))
+lusc_frma <- createEntity(lusc_frma)
+
+#add object into the data entity
+lusc_frma <- addObject(lusc_frma,Lusc_frma)
+
+#push the raw data into this entity
+lusc_frma <- storeEntity(entity=lusc_frma)
+
+############################################################################################
+lusc_snm <- Data(list(name = "lusc_snm", parentId = 'syn87682'))
+lusc_snm <- createEntity(lusc_snm)
 
 # add object into the data entity
-#dir_dCHIP <- addObject(dir_dCHIP,Dir_dCHIP)
+lusc_snm <- addObject(lusc_snm,Lusc_snm)
 
 # push the raw data into this entity
-#dir_dCHIP <- storeEntity(entity=dir_dCHIP)
-#############################################################################################
-
-#dir_frma <- Data(list(name = "dir frma", parentId = 'syn87682'))
-#dir_frma <- createEntity(dir_frma)
-
-# add object into the data entity
-#dir_frma <- addObject(dir_frma,Dir_frma)
-
-# push the raw data into this entity
-#dir_frma <- storeEntity(entity=dir_frma)
-
-#############################################################################################
-
-#dir_barcode <- Data(list(name = "dir barcode", parentId = 'syn87682'))
-#dir_barcode <- createEntity(dir_barcode)
-
-# add object into the data entity
-#dir_barcode <- addObject(dir_barcode,Dir_barcode)
-
-# push the raw data into this entity
-#dir_barcode <- storeEntity(entity=dir_barcode)
-
-#############################################################################################
-
-dir_snm <- Data(list(name = "dir_snm", parentId = 'syn87682'))
-dir_snm <- createEntity(dir_snm)
-
-# add object into the data entity
-dir_snm <- addObject(zhu_snm,Dir_snm)
-
-# push the raw data into this entity
-dir_snm <- storeEntity(entity=dir_snm)
+lusc_snm <- storeEntity(entity=lusc_snm)
 
 
