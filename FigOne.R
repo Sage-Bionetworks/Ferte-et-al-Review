@@ -16,7 +16,6 @@ require(synapseClient)
 
 ## R functions for generating figures.
 
-
 ## PULL IN THE RAW DATA FROM SYNAPSE
 zhuRawEnt <- loadEntity('syn1439020')
 houRawEnt <- loadEntity('syn1422295')
@@ -32,7 +31,6 @@ getCelNames <- function(x){
   require(affy)
   fileNames <- list.celfiles(path = x$cacheDir, full.names = TRUE)
 }
-
 
 celNamesList <- lapply(rawEntities, getCelNames)
 
@@ -76,11 +74,11 @@ studyIndicator <- c(rep('zhu', ncol(rawDatMatList$zhu)),
 
 #Plot the principal components
 
-svdObj <- fast.svd(fullRawMat)
+svdObj <- svd(fullRawMat)
 plot(svdObj$v[,1],svdObj$v[,2],
-     col=c("royal blue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
-     bg=c("royal blue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
-     pch=c(8,22,23,24)[as.factor(studyIndicator)],
-     cex=0.8)
+     col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     pch=c(8,24,23,22)[as.factor(studyIndicator)],
+     cex=0.8, xlab="Principal component 1", ylab="Principal component 2")
 
 
