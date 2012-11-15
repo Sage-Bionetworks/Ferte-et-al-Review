@@ -1,11 +1,10 @@
-## Andrew Trister
+## Andrew Trister & Charles Ferté
 ## Sage Bionetworks
-
+## Nov 15th 2012
 
 ## Raw Data PC plots - modified from Erich Huang's code
 ## FIRST: GENERATING UN-NORMALIZED, UN-BACKGROUND CORRECTED DATA
-## We'll use the 'rma()' function with the normalize and background arguments
-## set to false.
+## We'll use the 'rma()' function with the normalize and background arguments set to false.
 
 ## REQUIRED LIBRARIES
 require(Biobase)
@@ -13,6 +12,9 @@ require(affy)
 require(snm)
 require(ggplot2)
 require(synapseClient)
+
+
+## R functions for generating figures.
 
 
 ## PULL IN THE RAW DATA FROM SYNAPSE
@@ -25,7 +27,24 @@ luscRawEnt <- loadEntity('syn1426948')
 rawEntities <- list(zhuRawEnt, houRawEnt, dirRawEnt, luscRawEnt)
 names(rawEntities) <- c('zhu', 'hou', 'dir', 'lusc')
 
+## DEFINE getCelNames() FUNCTION
+getCelNames <- function(x){
+  require(affy)
+  fileNames <- list.celfiles(path = x$cacheDir, full.names = TRUE)
+}
+
+
 celNamesList <- lapply(rawEntities, getCelNames)
+
+## DEFINE getRawDat() FUNCTION
+# Merely using the rma() function to extract summarized but not normalized or
+# background-adjusted expression data
+getRawDat <- function(x){
+  require(affy)
+  affyBatchObj <- ReadAffy(filenames = x)
+  rawDat <- rma(affyBatchObj, normalize = FALSE, background = FALSE)
+}
+
 
 rawDatList <- lapply(celNamesList, getRawDat)
 
@@ -33,6 +52,15 @@ rawDatMatList <- lapply(rawDatList, exprs)
 
 # Since these platforms are on two different Affymetrix platforms, we use
 # the intersection of the Affymetrix probesets for comparative purposes
+
+## DEFINE intersectFeatures() FUNCTION
+## Take the entity list, get the feature names for the disparate Affy platforms and return
+## the intersection of the feature names across platforms
+intersectFeatures <- function(datMatList){
+  featureList <- lapply(datMatList, rownames)
+  intersectNames <- Reduce(intersect, featureList)
+  return(intersectNames)
+}
 
 commonFeatures <- intersectFeatures(rawDatMatList)
 
