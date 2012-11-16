@@ -71,16 +71,12 @@ studyIndicator <- c(rep('zhu', ncol(rawDatMatList$zhu)),
                     rep('lusc', ncol(rawDatMatList$lusc)))
 
 #Plot the principal components
-
 svdObj <- svd(fullRawMat)
 plot(svdObj$v[,1],svdObj$v[,2],
      col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
      bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
      pch=c(8,24,23,19)[as.factor(studyIndicator)], font=2,
      cex=0.9, xlab="Principal component 1", ylab="Principal component 2")
-
-
-
 
 
 # Now load the RMA normalized
@@ -335,16 +331,11 @@ plot(snmsvdObj$v[,1],snmsvdObj$v[,2],
 
 
 
-
 #plot the scaled SNM SVD
-
 scaledsnmMat <-   returnMat <- lapply(fullsnmMat, function(x){
   t(scale(t(x),center=TRUE,scale=TRUE))
 })
 
-
-zhuExpr1 <- t(scale(t(zhuExpr),center=TRUE,scale=TRUE))
-dirExpr1 <- t(scale(t(dirExpr),center=TRUE,scale=TRUE))
 
 
 
@@ -358,4 +349,63 @@ plot(c(1,1,1,1),c(1,2,3,4),
      cex=0.9)
 
 
+## part C of the figure
+
+# load the clinical data
+DirClin  <- loadEntity('syn1438222')
+DirClin <- DirClin$objects$DirClinF
+
+# define the BATCH as the date of the CEL file production
+BATCH <- as.factor(DirClin$SITE)
+
+# compute the svd of Dir (Unsupervised)
+UNSUPERV <- svd(Dir_rma)
+
+
+par(mfrow=c(1,2))
+#plot a table
+plot(UNSUPERV$v[,1],UNSUPERV$v[,2],
+     col=rainbow(length(table(BATCH)))[BATCH],
+     pch=19, font=2,
+     cex=1.4,, main="Unsupervised Normalization (RMA)")
+
+
+# plot the RMA Dir data with the batch
+SUPERV <- svd(Dir_snm)
+
+#plot a table
+plot(SUPERV$v[,1],SUPERV$v[,2],
+     col=rainbow(length(table(BATCH)))[BATCH],
+     pch=19, font=2,
+     cex=1.4, main="Supervised Normalization (SNM)")
+
+
+# load the raw data not normalized
+
+# load SNM mol data
+
+zhuRMAEnt <- loadEntity('syn1436971')
+Zhu_rma <- exprs(zhuRMAEnt$objects$Zhu_rma)
      
+zhuRMAEnt <- loadEntity('syn1436971')
+Zhu_rma <- exprs(zhuRMAEnt$objects$Zhu_rma)
+
+
+# we know that GENDER and P_Stage are biological & study variables of interest 
+
+
+# SCANBATCH is a variable concatenating the study name and the probable batch (grouped according to the cel files date of production)
+
+myobject <- log2(pm(rawdata))
+snm.fit <- snm(myobject, 
+               bio.var=bio.var, 
+               adj.var=adj.var, 
+               rm.adj=TRUE)
+new.expr <- snm.fit$norm.dat
+pm(rawdata) <- 2^new.expr
+myNormSummarized <- rma(rawdata, background=F, normalize=F)
+dim(myNormSummarized)
+tmp <- paste(dataset,"_snm",sep="") #put SNM at the end of the names
+assign(tmp,myNormSummarized)
+
+##################################################################################
