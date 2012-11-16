@@ -43,6 +43,36 @@ intersectFeatures <- function(datMatList){
 }
 
 
+scaleFeatures <- function(datMatList){
+  featuresList <- sapply(datMatList, function(x){
+    t(scale(t(x),center=TRUE,scale=TRUE))
+  })
+  return(data.frame(featuresList))
+}
+
+# 
+# normalize_to_X <- function(mean.x, sd.x, Y){
+#  m.y <- rowMeans(Y)
+#  sd.y <- apply(Y, 1, sd)
+#  Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
+#  Y.adj[sd.y == 0] <- mean.x[sd.y==0]
+#  Y.adj
+# }
+
+# 
+# scaleFeatures <- function(datMatList){
+#   featuresList <- sapply(datMatList, function(x){
+#     normalize_to_X(rowMeans(Zhu_snm),apply(Zhu_frma,1,sd),x)
+#   })
+#   return(data.frame(featuresList))
+# }
+
+
+
+#zhuExpr2 <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
+
+
+
 ## PULL IN THE RAW DATA FROM SYNAPSE
 zhuRawEnt <- loadEntity('syn1439020')
 houRawEnt <- loadEntity('syn1422295')
@@ -338,15 +368,16 @@ plot(snmsvdObj$v[,1],snmsvdObj$v[,2],
 
 #plot the scaled SNM SVD
 
-scaledsnmMat <-   returnMat <- lapply(fullsnmMat, function(x){
-  t(scale(t(x),center=TRUE,scale=TRUE))
-})
 
+scaledsnmMat <-  scaleFeatures(list(a=snmDatMatList$zhu[snmcommonFeatures, ],
+                                    b=snmDatMatList$dir[snmcommonFeatures, ]))
 
-zhuExpr1 <- t(scale(t(zhuExpr),center=TRUE,scale=TRUE))
-dirExpr1 <- t(scale(t(dirExpr),center=TRUE,scale=TRUE))
-
-
+scaledsnmsvdObj <- svd(scaledsnmMat)
+plot(scaledsnmsvdObj$v[,1],scaledsnmsvdObj$v[,2],
+     col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     pch=c(8,24,23,19)[as.factor(studyIndicator)], font=2,
+     cex=0.9, xlab="Principal component 1", ylab="Principal component 2")
 
 
 
