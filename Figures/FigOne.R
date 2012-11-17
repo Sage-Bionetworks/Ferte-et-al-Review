@@ -43,6 +43,15 @@ intersectFeatures <- function(datMatList){
 }
 
 
+scaleFeatures <- function(datMatList){
+  featuresList <- sapply(datMatList, function(x){
+    t(scale(t(x),center=TRUE,scale=TRUE))
+  })
+  return(data.frame(featuresList))
+}
+
+
+
 ## PULL IN THE RAW DATA FROM SYNAPSE
 zhuRawEnt <- loadEntity('syn1439020')
 houRawEnt <- loadEntity('syn1422295')
@@ -332,12 +341,17 @@ plot(snmsvdObj$v[,1],snmsvdObj$v[,2],
 
 
 #plot the scaled SNM SVD
-scaledsnmMat <-   returnMat <- lapply(fullsnmMat, function(x){
-  t(scale(t(x),center=TRUE,scale=TRUE))
-})
+
+scaledsnmMat <-  scaleFeatures(list(a=snmDatMatList$zhu[snmcommonFeatures, ],
+                                    b=snmDatMatList$dir[snmcommonFeatures, ]))
 
 
-
+scaledsnmsvdObj <- svd(scaledsnmMat)
+plot(scaledsnmsvdObj$v[,1],scaledsnmsvdObj$v[,2],
+     col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     pch=c(8,24,23,19)[as.factor(studyIndicator)], font=2,
+     cex=0.9, xlab="Principal component 1", ylab="Principal component 2")
 
 
 
