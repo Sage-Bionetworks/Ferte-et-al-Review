@@ -360,14 +360,14 @@ BATCH <- as.factor(DirClin$SITE)
 
 # compute the svd of Dir (Unsupervised)
 UNSUPERV <- svd(Dir_rma)
-
-
-par(mfrow=c(1,2))
+Colors <- topo.colors(4)
+par(mfrow=c(1,1))
 #plot a table
 plot(UNSUPERV$v[,1],UNSUPERV$v[,2],
-     col=rainbow(length(table(BATCH)))[BATCH],
-     pch=19, font=2,
-     cex=1.4,, main="Unsupervised Normalization (RMA)")
+     col=Colors[BATCH],
+     pch=20, lwd=4,
+     cex=2,, main="Unsupervised Normalization (RMA)",
+     xlab="Principal component 1", ylab="Principal component 2")
 
 
 # plot the RMA Dir data with the batch
@@ -375,9 +375,10 @@ SUPERV <- svd(Dir_snm)
 
 #plot a table
 plot(SUPERV$v[,1],SUPERV$v[,2],
-     col=rainbow(length(table(BATCH)))[BATCH],
+     col=Colors[BATCH],
      pch=19, font=2,
-     cex=1.4, main="Supervised Normalization (SNM)")
+     cex=1.4, main="Supervised Normalization (SNM)",
+     xlab="Principal component 1", ylab="Principal component 2")
 
 
 # load the raw data not normalized
