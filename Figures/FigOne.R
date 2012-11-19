@@ -363,6 +363,7 @@ plot(c(1,1,1,1),c(1,2,3,4),
      cex=0.9)
 
 
+<<<<<<< HEAD
 
 
 
@@ -378,6 +379,9 @@ plot(c(1,1,1,1),c(1,2,3,4),
 
 
 ## part C of the figure one
+=======
+## plot the effect of SNM within Directors challenge
+>>>>>>> f596fbbece0c5ade0cff990c7efd59012a28c01b
 
 # load the clinical data
 DirClin  <- loadEntity('syn1438222')
