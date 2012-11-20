@@ -85,7 +85,7 @@ plot(svdObj$v[,1],svdObj$v[,2],
      col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
      bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
      pch=c(8,24,23,19)[as.factor(studyIndicator)], font=2,
-     cex=1.4, xlab="Principal component 1", ylab="Principal component 2")
+     cex=3, xlab="Principal component 1", ylab="Principal component 2")
 
 
 # Now load the RMA normalized

@@ -12,7 +12,7 @@ require(synapseClient)
 require(affy)
 require(caret)
 
-#synapseLogin()
+synapseLogin()
 
 ######################################################################################################################################
 # 1. load the datasets zhu and dir - preprocessing step to make them "comparable"
@@ -103,9 +103,18 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 # that already exist.
 ###################################################################################
 
-#supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
-#supNormEnt <- addObject(supNormEnt, zhuExpr)
-#supNormEnt <- addObject(supNormEnt, dirExpr)
-#supNormEnt <- addObject(supNormEnt, zhuClin)
-#supNormEnt <- addObject(supNormEnt, dirClin)
-#supNormEnt <- storeEntity(supNormEnt)
+# supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
+# supNormEnt <- addObject(supNormEnt, zhuExpr)
+# supNormEnt <- addObject(supNormEnt, dirExpr)
+# supNormEnt <- addObject(supNormEnt, zhuClin)
+# supNormEnt <- addObject(supNormEnt, dirClin)
+# supNormEnt <- storeEntity(supNormEnt)
+
+
+# scaledfRMAEnt <- Data(name="scaledfRMADirZhu", parentId="syn87682")
+# scaledfRMAEnt <- addObject(scaledfRMAEnt, zhuExpr)
+# scaledfRMAEnt <- addObject(scaledfRMAEnt, dirExpr)
+# scaledfRMAEnt <- addObject(scaledfRMAEnt, zhuClin)
+# scaledfRMAEnt <- addObject(scaledfRMAEnt, dirClin)
+# scaledfRMAEnt <- storeEntity(scaledfRMAEnt)
+# 
