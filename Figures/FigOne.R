@@ -199,8 +199,8 @@ studyIndicator <- c(rep('zhu', ncol(BarcodeDatMatList$zhu)),
 
 #Plot the principal components
 
-fRMAsvdObj <- svd(fullfRMAMat)
-plot(fRMAsvdObj$v[,1],fRMAsvdObj$v[,2],
+BarcodesvdObj <- svd(fullBarcodeMat)
+plot(BarcodesvdObj$v[,1],BarcodesvdObj$v[,2],
      col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
      bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
      pch=c(8,24,23,19)[as.factor(studyIndicator)], font=2,
@@ -451,3 +451,10 @@ plot(SUPERV$v[,1],SUPERV$v[,2],
      cex=1.4, main="Supervised Normalization (SNM)",
      xlab="Principal component 1", ylab="Principal component 2")
 
+# plot the BARCODE Dir data with the batch
+BARCODE <- svd(Dir_Barcode)
+plot(BARCODE$v[,1],BARCODE$v[,2],
+     col=Colors[BATCH],
+     pch=19, font=2,
+     cex=1.4, main="Barcode Normalization",
+     xlab="Principal component 1", ylab="Principal component 2")
