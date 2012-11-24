@@ -166,6 +166,46 @@ plot(fRMAsvdObj$v[,1],fRMAsvdObj$v[,2],
      cex=1.4, xlab="Principal component 1", ylab="Principal component 2")
 
 
+# Now load the barcode normalized
+zhuBarcodeEnt <- loadEntity('syn1522703')
+Zhu_Barcode <- zhuBarcodeEnt$objects$Zhu_barcode
+
+houBarcodeEnt <- loadEntity('syn1522729')
+Hou_Barcode <- houBarcodeEnt$objects$Hou_barcode
+
+dirBarcodeEnt <- loadEntity('syn1522700')
+Dir_Barcode <- dirBarcodeEnt$objects$Dir_barcode
+
+luscBarcodeEnt <- loadEntity('syn1522732')
+Lusc_Barcode <- luscBarcodeEnt$objects$Lusc_barcode
+
+BarcodeDatMatList <- list(zhu =Zhu_Barcode,hou=Hou_Barcode,dir=Dir_Barcode,lusc=Lusc_Barcode)
+
+BarcodecommonFeatures <- intersectFeatures(BarcodeDatMatList)
+
+fullBarcodeMat <- cbind(BarcodeDatMatList$zhu[
+  BarcodecommonFeatures, ],
+                     BarcodeDatMatList$hou[
+                       BarcodecommonFeatures, ],
+                     BarcodeDatMatList$dir[
+                       BarcodecommonFeatures, ],
+                     BarcodeDatMatList$lusc[
+                       BarcodecommonFeatures, ])
+
+studyIndicator <- c(rep('zhu', ncol(BarcodeDatMatList$zhu)),
+                        rep('hou', ncol(BarcodeDatMatList$hou)),
+                        rep('dir', ncol(BarcodeDatMatList$dir)),
+                        rep('lusc', ncol(BarcodeDatMatList$lusc)))
+
+#Plot the principal components
+
+fRMAsvdObj <- svd(fullfRMAMat)
+plot(fRMAsvdObj$v[,1],fRMAsvdObj$v[,2],
+     col=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     bg=c("royalblue","orange","aquamarine4","brown2")[as.factor(studyIndicator)],
+     pch=c(8,24,23,19)[as.factor(studyIndicator)], font=2,
+     cex=1.4, xlab="Principal component 1", ylab="Principal component 2")
+
 
 
 

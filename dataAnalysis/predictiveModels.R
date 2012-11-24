@@ -26,7 +26,7 @@ synapseLogin()
 ######################################################################################################################################
 
 # load the supervised normalized data from synapse
-supNormEnt <- loadEntity("syn1514802")
+supNormEnt <- loadEntity("syn1514794")
 dirClin <- supNormEnt$objects$dirClin
 dirExpr <- supNormEnt$objects$dirExpr
 zhuClin <- supNormEnt$objects$zhuClin

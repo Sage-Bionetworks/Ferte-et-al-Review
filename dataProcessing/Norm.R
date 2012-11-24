@@ -51,7 +51,7 @@ setwd(datapath1)
 rawdata <- ReadAffy(filenames=list.celfiles(datapath1))
 
 ##################################################################################
-# make the sample Names coherent with the samples clinically curated
+# make the sample Names coherent with the samples clinically curated (for Lusc only)
 ##################################################################################
 # load the clinical data data from synapse
 luscClin <- loadEntity('syn1438233')
@@ -89,6 +89,10 @@ assign(tmp,mas5(rawdata))
 ###################################################################################
 tmp <- paste(dataset,"_frma",sep="") #put frma at the end of the names
 assign(tmp,frma(rawdata, summarize = "random_effect"))
+
+# perform Barcode normalization
+tmp1 <- paste(dataset,"_barcode",sep="")
+assign(tmp1,barcode(get(tmp)))
 
 ###################################################################################
 # perform supervised normalization using snm (and rma summarization)
@@ -185,4 +189,12 @@ lusc_snm <- addObject(lusc_snm,Lusc_snm)
 # push the raw data into this entity
 lusc_snm <- storeEntity(entity=lusc_snm)
 
+############################################################################################
+lusc_barcode <- Data(list(name = "lusc_barcode", parentId = 'syn87682'))
+lusc_barcode <- createEntity(lusc_barcode)
 
+# add object into the data entity
+lusc_barcode <- addObject(lusc_barcode,Lusc_barcode)
+
+# push the raw data into this entity
+lusc_barcode <- storeEntity(entity=lusc_barcode)
