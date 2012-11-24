@@ -73,26 +73,27 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 # make the two datasets have the same mean and variance by scaling the validation data (zhuExpr) using scale function
 zhuExpr1 <- t(scale(t(zhuExpr),center=TRUE,scale=TRUE))
 dirExpr1 <- t(scale(t(dirExpr),center=TRUE,scale=TRUE))
+
+
+
+# Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
+normalize_to_X <- function(mean.x, sd.x, Y){
+ m.y <- rowMeans(Y)
+ sd.y <- apply(Y, 1, sd)
+ Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
+ Y.adj[sd.y == 0] <- mean.x[sd.y==0]
+ Y.adj
+}
+
+dirExpr1 <- dirExpr
+zhuExpr1 <- normalize_to_X(rowMeans(dirExpr1), apply(dirExpr1, 1, sd), zhuExpr)
+
 # describe the latent structure
 s <- svd(cbind(zhuExpr1,dirExpr1))
 plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
-
-# Justin Guinney's function to rescale the validation data to get the same mean/var than the training set
-#normalize_to_X <- function(mean.x, sd.x, Y){
-#  m.y <- rowMeans(Y)
-#  sd.y <- apply(Y, 1, sd)
-#  Y.adj <- (Y - m.y) * sd.x / sd.y  + mean.x 
-#  Y.adj[sd.y == 0] <- mean.x[sd.y==0]
-#  Y.adj
-#}
-
-#zhuExpr2 <- normalize_to_X(rowMeans(dirExpr), apply(dirExpr, 1, sd), zhuExpr)
-
-# describe the latent structure
-#s <- svd(cbind(zhuExpr2,dirExpr))
-#plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
-
+dirExpr <- dirExpr1
+zhuExpr <- zhuExpr1
 
 ###################################################################################
 # save the data in Synapse
@@ -117,4 +118,10 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 # scaledfRMAEnt <- addObject(scaledfRMAEnt, zhuClin)
 # scaledfRMAEnt <- addObject(scaledfRMAEnt, dirClin)
 # scaledfRMAEnt <- storeEntity(scaledfRMAEnt)
-# 
+
+# scaledBarcodeEnt <- Data(name="scaledBarcodeDirZhu", parentId="syn87682")
+# scaledBarcodeEnt <- addObject(scaledBarcodeEnt, zhuExpr)
+# scaledBarcodeEnt <- addObject(scaledBarcodeEnt, dirExpr)
+# scaledBarcodeEnt <- addObject(scaledBarcodeEnt, zhuClin)
+# scaledBarcodeEnt <- addObject(scaledBarcodeEnt, dirClin)
+# scaledBarcodeEnt <- storeEntity(scaledBarcodeEnt)
