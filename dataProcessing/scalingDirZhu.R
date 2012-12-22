@@ -25,11 +25,10 @@ dirExpr <- loadEntity('syn1440819') #RMA normalized data from director's challen
 dirExpr <- dirExpr$objects$Dir_rma
 
 # load the clinical data data from synapse
-zhuClin <- loadEntity('syn1438225')
-zhuClin <- zhuClin$objects$ZhuClinF
-dirClin <- loadEntity('syn1438222')
-dirClin <- dirClin$objects$DirClinF
-
+zhuClin <- loadEntity('syn1571258')
+zhuClin <- zhuClin$objects$zhuClin
+dirClin <- loadEntity('syn1571256')
+dirClin <- dirClin$objects$dirClin
 
 # set P_Stage to be a factor with same levels across dir and zhu
 dirClin$P_Stage <- factor(dirClin$P_Stage)
