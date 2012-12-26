@@ -24,6 +24,12 @@ zhuExpr <- zhuExpr$objects$Zhu_rma
 dirExpr <- loadEntity('syn1440819') #RMA normalized data from director's challenge
 dirExpr <- dirExpr$objects$Dir_rma
 
+# # load the snm normalized data from synapse
+# zhuExpr <- loadEntity('syn1457384') # snm normalized Zhu data
+# zhuExpr <- zhuExpr$objects$Zhu_snm
+# dirExpr <- loadEntity('syn1457380') # snm normalized data from director's challenge
+# dirExpr <- dirExpr$objects$Dir_snm
+
 # load the clinical data data from synapse
 zhuClin <- loadEntity('syn1571258')
 zhuClin <- zhuClin$objects$zhuClin
@@ -48,6 +54,8 @@ iddir <- rownames(dirClin)[ !is.na(dirClin$os3yr) ]
 dirClin <- dirClin[iddir, ]
 dirExpr <- dirExpr[, iddir]
 dirExpr <- exprs(dirExpr)
+
+# Note that some patients whose vital_status=0 (alive) and time_to_last_contact_or_death < 36 months are removed from the further analyses
 
 # get rid of the control probesets
 controlProbes <- grep("AFFX",rownames(zhuExpr))
@@ -103,13 +111,19 @@ zhuExpr <- zhuExpr1
 # that already exist.
 ###################################################################################
 
-# supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn87682")
+# rmaNormEnt <- Data(name="rmaNormDirZhu", parentId="syn1488300")
+# rmaNormEnt <- addObject(rmaNormEnt, zhuExpr)
+# rmaNormEnt <- addObject(rmaNormEnt, dirExpr)
+# rmaNormEnt <- addObject(rmaNormEnt, zhuClin)
+# rmaNormEnt <- addObject(rmaNormEnt, dirClin)
+# rmaNormEnt <- storeEntity(rmaNormEnt)
+
+# supNormEnt <- Data(name="supervisedNormDirZhu", parentId="syn1488300")
 # supNormEnt <- addObject(supNormEnt, zhuExpr)
 # supNormEnt <- addObject(supNormEnt, dirExpr)
 # supNormEnt <- addObject(supNormEnt, zhuClin)
 # supNormEnt <- addObject(supNormEnt, dirClin)
 # supNormEnt <- storeEntity(supNormEnt)
-
 
 # scaledfRMAEnt <- Data(name="scaledfRMADirZhu", parentId="syn87682")
 # scaledfRMAEnt <- addObject(scaledfRMAEnt, zhuExpr)
