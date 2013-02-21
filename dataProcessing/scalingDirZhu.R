@@ -24,7 +24,7 @@ zhuExpr <- zhuExpr$objects$Zhu_rma
 dirExpr <- loadEntity('syn1440819') #RMA normalized data from director's challenge
 dirExpr <- dirExpr$objects$Dir_rma
 
-# # load the snm normalized data from synapse
+# # load the snm normalized data from synapse (if you want to work on the snm normalized data)
 # zhuExpr <- loadEntity('syn1457384') # snm normalized Zhu data
 # zhuExpr <- zhuExpr$objects$Zhu_snm
 # dirExpr <- loadEntity('syn1457380') # snm normalized data from director's challenge
@@ -61,6 +61,46 @@ dirExpr <- exprs(dirExpr)
 controlProbes <- grep("AFFX",rownames(zhuExpr))
 zhuExpr <- zhuExpr[-controlProbes, ]
 dirExpr <- dirExpr[rownames(zhuExpr), ]
+
+
+# transform the probes into genes
+library(hgu133plus2.db)
+tmp <- unlist(mget(x=rownames(dirExpr),hgu133plus2SYMBOL,ifnotfound=NA))
+
+combine_probes_2_gene <- function(expr, genes, method="svd"){
+  
+  if(is.list(genes)) genes <- unlist(genes)
+  
+  stopifnot(dim(expr)[1] ==  length(genes))
+  ugenes <- unique(genes)
+  ugenes <- sort(ugenes[!is.na(ugenes)])
+  M <- matrix(NaN, ncol=dim(expr)[2],nrow=length(ugenes),
+              dimnames=list(ugenes, colnames(expr)))
+  
+  for(gene in ugenes){
+    sub.expr <- as.matrix(expr[which(genes == gene),])
+    if(dim(sub.expr)[2] == 1){
+      M[gene,] <- sub.expr
+    }else{
+      tmp <- svd(sub.expr - rowMeans(sub.expr))$v[,1]
+      tmp.c <- mean(cor(tmp, t(sub.expr)))
+      #cat(gene," ", tmp.c, "\n")
+      multiplier <- ifelse(tmp.c < 0, -1, 1)
+      M[gene,] <- tmp * multiplier
+    }
+  }
+  M
+}
+
+dirExpr1 <- combine_probes_2_gene(expr=dirExpr,genes=tmp)
+colnames(dirExpr1) <- colnames(dirExpr)
+dirExpr <- dirExpr1
+rm(dirExpr1)
+
+zhuExpr1 <- combine_probes_2_gene(expr=zhuExpr,genes=tmp)
+colnames(zhuExpr1) <- colnames(zhuExpr)
+zhuExpr <- zhuExpr1
+rm(zhuExpr1)
 
 # describe the latent structure
 vec <- c(rep(1,times=59),rep(2,times=274))
@@ -101,7 +141,6 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 
 dirExpr <- dirExpr1
 zhuExpr <- zhuExpr1
-
 
 ###################################################################################
 # save the data in Synapse
