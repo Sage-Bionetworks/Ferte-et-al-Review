@@ -6,3 +6,4 @@ jcoPredictiveModel.RData
 JCO_REVIEW_Ferte.Rproj
 *.Rproj
 clin_data_input_patch.R
+*.txt

@@ -102,6 +102,7 @@ plot(s$v[,1],s$v[,2],col=c("royalblue","red")[vec],pch=20)
 dirExpr <- dirExpr1
 zhuExpr <- zhuExpr1
 
+
 ###################################################################################
 # save the data in Synapse
 #
