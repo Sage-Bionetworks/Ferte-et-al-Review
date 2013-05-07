@@ -70,11 +70,12 @@ yhatEnet <- predict(fitEnet, t(z), type="response", s="lambda.min")
 boxplot(yhatEnet ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main="elastic net - molecular + clinical features")
 stripchart(yhatEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE, add=TRUE, cex=.6)
 
-#  build a more robust classifier( bootstrapping)
+#  build a more robust classifier( N= 200 bootstrapps)
+N <- 500
 tmp <- c()
 try.cv.fit <- c()
 tryfit <- c()
-for(i in c(1:1000)) {
+for(i in c(1:N)) {
   print(i)
   N <- sample(colnames(dirExpr),274,replace=TRUE)
   try.cv.fit <- cv.glmnet(x=t(x[,N]), y=factor(dirClin[N,"os3yr"]), nfolds=10, alpha=.1, family="binomial", penalty.factor=pen)
@@ -101,10 +102,10 @@ stripchart(yhatboostEnet ~ zhuClin$os3yr,pch=20, col="royalblue", vertical=TRUE,
 ######################################################################################################################################
 
 # let's find the optimal value of mtry
-a <- tuneRF(x=t(x), y=factor(dirClin$os3yr), stepFactor=1.5, doBest=TRUE, trace=TRUE, ntreeTry=1000,type="regression")
+a <- tuneRF(x=t(x), y=factor(dirClin$os3yr), stepFactor=1.5, doBest=TRUE, trace=TRUE, ntreeTry=300,type="regression")
 
 # run the model with this mtry value
-fitRF <- randomForest(x=t(x), y=factor(dirClin$os3yr), mtry=a$mtry, do.trace=10, ntree=1000, importance=TRUE,type="regression")
+fitRF <- randomForest(x=t(x), y=factor(dirClin$os3yr), mtry=a$mtry, do.trace=10, ntree=300, importance=TRUE,type="regression")
 yhatRF <- predict(fitRF, t(z), type="prob")[,2]
 
 boxplot(yhatRF ~ zhuClin$os3yr, ylab="3-year OS prediction (%)", xlab="3-year OS", main= "Random Forest - molecular + clinical features")
@@ -260,6 +261,50 @@ heatmap.2(x=z[features_Pls,names(riskPls1)],trace="none",
           ColSideColors=c("blue","magenta")[riskPls1+1],
           col=greenred(50),scale="row",
           breaks=seq(-2.5,2.5,len=51),Colv=TRUE, main="Partial Least Square")
+
+
+################################################################################################
+# retrieve the feature selected in all the fit objects of the molecular signatures
+################################################################################################
+
+foo1 <- as.numeric(fitEnet$beta)
+names(foo1) <- rownames(fitEnet$beta)
+bar <- as.numeric(fitPcr$coefficients[,,1])
+names(bar) <- names(fitPcr$coefficients[,,1])
+baz <- as.numeric(fitPls$coefficients[,,1])
+names(baz) <- names(fitPls$coefficients[,,1])
+all.fits <- c(list(foo1),
+              list(boostEnetfit$coefficients),
+              list(bar),
+              list(baz),list(fitRF$importance[,3]))
+
+foo <- c()
+for(i in 1:length(all.fits)){
+  foo <- c(foo,list(names(which(abs(all.fits[[i]])>1e-4))))  
+}
+
+names(foo) <- c("Elastic Net","Bootstrapped\nElasticNet","Principal\nComponent Regression","Partial Least\nSquares","RandomForest")
+
+for(i in 1:length(foo)){
+  foo[[i]] <- gsub(pattern="t(x)",replacement="",x=foo[[i]],fixed=TRUE)
+  foo[[i]] <- gsub(pattern="`",replacement="",x=foo[[i]],fixed=TRUE)
+  foo[[i]][foo[[i]]=="(Intercept)"] <- NA
+  print(length(foo[[i]]))
+}
+
+rm(all.fits,bar,baz,foo1)
+
+# here ared the overlaping features between the different modeling approaches
+n12 <- intersect(foo[[1]],foo[[2]])
+n13 <- intersect(foo[[1]],foo[[3]])
+n14 <- intersect(foo[[1]],foo[[4]])
+n15 <- intersect(foo[[1]],foo[[5]])
+n23 <- intersect(foo[[2]],foo[[3]])
+n24 <- intersect(foo[[2]],foo[[4]])
+n25 <- intersect(foo[[2]],foo[[5]])
+n34 <- intersect(foo[[3]],foo[[4]])
+n35 <- intersect(foo[[3]],foo[[5]])
+n45 <- intersect(foo[[4]],foo[[5]])
 
 
 
